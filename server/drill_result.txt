@@ -1,0 +1,37 @@
+Concurrency 6
+Iterations 10000
+Rampup 0
+Base URL http://localhost:3000
+
+
+Health                    Total requests            10000
+Health                    Successful requests       10000
+Health                    Failed requests           0
+Health                    Median time per request   0ms
+Health                    Average time per request  1ms
+Health                    Sample standard deviation 3ms
+Health                    99.0'th percentile        16ms
+Health                    99.5'th percentile        20ms
+Health                    99.9'th percentile        34ms
+
+User                      Total requests            10000
+User                      Successful requests       10000
+User                      Failed requests           0
+User                      Median time per request   0ms
+User                      Average time per request  1ms
+User                      Sample standard deviation 3ms
+User                      99.0'th percentile        15ms
+User                      99.5'th percentile        19ms
+User                      99.9'th percentile        29ms
+
+Time taken for tests      3.0 seconds
+Total requests            20000
+Successful requests       20000
+Failed requests           0
+Requests per second       6701.98 [#/sec]
+Median time per request   0ms
+Average time per request  1ms
+Sample standard deviation 3ms
+99.0'th percentile        15ms
+99.5'th percentile        19ms
+99.9'th percentile        32ms
