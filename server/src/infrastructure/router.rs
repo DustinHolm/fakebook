@@ -18,12 +18,12 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(CompressionLayer::new())
         .layer(Extension(schema))
+        .layer(Extension(pool))
         .into_inner();
 
     // Wrapped bottom to top
     let router = Router::new()
         .route("/health-check", get(handlers::health_check))
-        .layer(Extension(pool))
         .route(
             "/graphql",
             get(handlers::graphiql).post(handlers::graphql_handler),

@@ -6,10 +6,7 @@ use async_graphql::{
 };
 use axum::async_trait;
 use deadpool_postgres::Pool;
-use tokio_postgres::{
-    types::{to_sql_checked, ToSql},
-    Row,
-};
+use tokio_postgres::Row;
 use tracing::instrument;
 
 use crate::errors::{mapping::MappingError, query::QueryError};

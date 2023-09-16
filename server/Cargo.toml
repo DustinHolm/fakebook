@@ -7,7 +7,7 @@ edition = "2021"
 anyhow = "1.0.75"
 async-graphql = { version = "6.0.6", features = ["dataloader"] }
 async-graphql-axum = "6.0.6"
-axum = { version = "0.6.20", features = ["tracing"] }
+axum = { version = "0.6.20", features = ["http2", "tracing"] }
 deadpool-postgres = "0.10.5"
 dotenv = "0.15.0"
 hyper = { version = "0.14.27", features = ["full"] }

@@ -15,7 +15,7 @@ async fn main() {
     logging::init();
 
     let pool = db::create_pool().expect("Pool should have been created");
-    let schema = schema::build_with_dataloaders(pool.clone());
+    let schema = schema::new();
     let router = router::new(pool, schema);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

@@ -59,7 +59,9 @@ export const normal = () => {
 
   const res = normalRequests[i](id);
 
-  check(res, { "response did not contain error": (r) => !r.body.errors });
+  check(res, {
+    "response did not contain error": (r) => r.status == 200 && !r.body.errors,
+  });
 };
 
 const meanRequests = [UserThriceNestedFriends];
@@ -69,7 +71,9 @@ export const mean = () => {
 
   const res = meanRequests[i](id);
 
-  check(res, { "response did not contain error": (r) => !r.body.errors });
+  check(res, {
+    "response did not contain error": (r) => r.status == 200 && !r.body.errors,
+  });
 };
 
 export const handleSummary = (data) => {

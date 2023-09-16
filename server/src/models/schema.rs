@@ -1,12 +1,9 @@
-use async_graphql::{Context, EmptyMutation, EmptySubscription, Object};
-use deadpool_postgres::Pool;
+use async_graphql::{dataloader::DataLoader, Context, Object};
 use tracing::instrument;
 
 use crate::errors::query::QueryError;
 
-use super::app_user::AppUser;
-
-pub type Schema = async_graphql::Schema<RootQuery, EmptyMutation, EmptySubscription>;
+use super::app_user::{AppUser, AppUserLoader};
 
 pub struct RootQuery;
 
@@ -14,14 +11,14 @@ pub struct RootQuery;
 impl RootQuery {
     #[instrument(skip(self, ctx), err(Debug))]
     async fn user(&self, ctx: &Context<'_>, id: i32) -> Result<AppUser, QueryError> {
-        let db = ctx.data::<Pool>().unwrap().get().await?;
+        let loader = ctx
+            .data::<DataLoader<AppUserLoader>>()
+            .map_err(|e| QueryError::internal(e.message))?;
 
-        let row = db
-            .query_opt("SELECT * FROM app_user WHERE user_id = $1", &[&id])
+        let user = loader
+            .load_one(id)
             .await?
             .ok_or_else(QueryError::not_found)?;
-
-        let user = row.try_into()?;
 
         Ok(user)
     }
