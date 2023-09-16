@@ -11,8 +11,5 @@ docker ps -a | grep fakebook-db > /dev/null && docker rm fakebook-db
         -v fakebook-volume:/var/lib/postgresql/data \
         --name fakebook-db \
         --rm \
-        fakebook-db \
-        -c log_statement=all
-
-     
+        fakebook-db
 )
