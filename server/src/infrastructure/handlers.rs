@@ -8,16 +8,16 @@ use deadpool_postgres::Pool;
 
 use crate::errors::fatal::FatalError;
 
-use super::{db::AppLoader, schema::Schema};
+use super::{db::Loaders, schema::Schema};
 
 pub async fn graphql_handler(
     schema: Extension<Schema>,
     pool: Extension<Pool>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let req_with_loader = req.into_inner().data(AppLoader::new(pool.0));
+    let req_with_loaders = req.into_inner().data(Loaders::new(pool.0));
 
-    schema.execute(req_with_loader).await.into()
+    schema.execute(req_with_loaders).await.into()
 }
 
 pub async fn graphiql() -> impl IntoResponse {

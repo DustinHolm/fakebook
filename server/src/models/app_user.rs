@@ -8,7 +8,7 @@ use tracing::instrument;
 
 use crate::{
     errors::{loader::LoaderError, mapping::MappingError, query::QueryError},
-    infrastructure::db::AppLoader,
+    infrastructure::db::Loaders,
 };
 
 #[derive(Clone)]
@@ -34,17 +34,17 @@ impl AppUser {
 
     #[instrument(skip(self, ctx), err(Debug))]
     pub async fn friends(&self, ctx: &Context<'_>) -> Result<Vec<AppUser>, QueryError> {
-        let loader = ctx
-            .data::<AppLoader>()
+        let loaders = ctx
+            .data::<Loaders>()
             .map_err(|e| QueryError::internal(e.message))?;
 
-        let friend_ids = loader
+        let friend_ids = loaders
             .friend_id
             .load_one(self.user_id)
             .await?
             .ok_or_else(QueryError::not_found)?;
 
-        let users = loader
+        let users = loaders
             .app_user
             .load_many(friend_ids)
             .await?

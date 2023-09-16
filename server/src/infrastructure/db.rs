@@ -22,12 +22,12 @@ pub fn create_pool() -> Result<Pool, FatalError> {
     Ok(pool)
 }
 
-pub struct AppLoader {
+pub struct Loaders {
     pub app_user: DataLoader<AppUserLoader, HashMapCache>,
     pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
 }
 
-impl AppLoader {
+impl Loaders {
     pub fn new(pool: Pool) -> Self {
         Self {
             app_user: DataLoader::with_cache(
