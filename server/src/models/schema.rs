@@ -12,7 +12,7 @@ pub struct RootQuery;
 
 #[Object]
 impl RootQuery {
-    #[instrument(skip(self, ctx), err())]
+    #[instrument(skip(self, ctx), err(Debug))]
     async fn user(&self, ctx: &Context<'_>, id: i32) -> Result<AppUser, QueryError> {
         let db = ctx.data::<Pool>().unwrap().get().await?;
 

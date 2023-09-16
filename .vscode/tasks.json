@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start DB",
+      "type": "shell",
+      "command": "./start.sh",
+      "options": {
+        "cwd": "${workspaceFolder}/database"
+      },
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Server",
+      "type": "shell",
+      "command": "cargo build --release",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Start Server",
+      "type": "shell",
+      "command": "cargo run --release",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "dependsOn": ["Build Server"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Benchmark",
+      "type": "shell",
+      "command": "k6 run main.js",
+      "options": {
+        "cwd": "${workspaceFolder}/benchmark"
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "focus": true
+      },
+      "dependsOn": ["Build Server"]
+    },
+    {
+      "label": "Run Benchmark",
+      "dependsOn": ["Start DB", "Start Server", "Benchmark"],
+      "problemMatcher": []
+    }
+  ]
+}

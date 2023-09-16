@@ -7,11 +7,11 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::models::schema::Schema;
-
 use super::handlers;
+use super::schema::Schema;
 
 pub fn new(pool: Pool, schema: Schema) -> Router {
+    // Wrapped top to bottom
     let middleware = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
         .layer(CatchPanicLayer::new())
@@ -20,6 +20,7 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
         .layer(Extension(schema))
         .into_inner();
 
+    // Wrapped bottom to top
     let router = Router::new()
         .route("/health-check", get(handlers::health_check))
         .layer(Extension(pool))

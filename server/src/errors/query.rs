@@ -5,6 +5,7 @@ use super::{base::Error, mapping::MappingError};
 enum Reason {
     Other,
     NotFound,
+    InternalSystem,
 }
 
 impl Display for Reason {
@@ -12,6 +13,7 @@ impl Display for Reason {
         match self {
             Reason::Other => write!(f, "Unexpected error"),
             Reason::NotFound => write!(f, "Could not find the requested data"),
+            Reason::InternalSystem => write!(f, "Internal error"),
         }
     }
 }
@@ -26,6 +28,13 @@ impl QueryError {
         Self {
             reason: Reason::NotFound,
             message: None,
+        }
+    }
+
+    pub fn internal(value: impl Display) -> Self {
+        Self {
+            reason: Reason::InternalSystem,
+            message: Some(value.to_string()),
         }
     }
 }

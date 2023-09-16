@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 
 use super::base::Error;
 
+#[derive(Clone)]
 enum Reason {
     Other,
     FromDb,
@@ -16,6 +17,7 @@ impl Display for Reason {
     }
 }
 
+#[derive(Clone)]
 pub struct MappingError {
     reason: Reason,
     message: String,
