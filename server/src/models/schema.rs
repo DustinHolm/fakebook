@@ -1,4 +1,7 @@
-use async_graphql::{dataloader::DataLoader, Context, Object};
+use async_graphql::{
+    dataloader::{DataLoader, HashMapCache},
+    Context, Object,
+};
 use tracing::instrument;
 
 use crate::errors::query::QueryError;
@@ -12,7 +15,7 @@ impl RootQuery {
     #[instrument(skip(self, ctx), err(Debug))]
     async fn user(&self, ctx: &Context<'_>, id: i32) -> Result<AppUser, QueryError> {
         let loader = ctx
-            .data::<DataLoader<AppUserLoader>>()
+            .data::<DataLoader<AppUserLoader, HashMapCache>>()
             .map_err(|e| QueryError::internal(e.message))?;
 
         let user = loader

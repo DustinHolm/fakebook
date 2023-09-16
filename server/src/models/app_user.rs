@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use async_graphql::{
-    dataloader::{DataLoader, Loader},
+    dataloader::{DataLoader, HashMapCache, Loader},
     Context, Object,
 };
 use axum::async_trait;
@@ -35,11 +35,11 @@ impl AppUser {
     #[instrument(skip(self, ctx), err(Debug))]
     pub async fn friends(&self, ctx: &Context<'_>) -> Result<Vec<AppUser>, QueryError> {
         let friend_loader = ctx
-            .data::<DataLoader<FriendIdLoader>>()
+            .data::<DataLoader<FriendIdLoader, HashMapCache>>()
             .map_err(|e| QueryError::internal(e.message))?;
 
         let user_loader = ctx
-            .data::<DataLoader<AppUserLoader>>()
+            .data::<DataLoader<AppUserLoader, HashMapCache>>()
             .map_err(|e| QueryError::internal(e.message))?;
 
         let friend_ids = friend_loader
