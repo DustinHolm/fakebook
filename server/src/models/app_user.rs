@@ -37,24 +37,37 @@ impl AppUser {
 
     #[instrument(skip(self, ctx), err(Debug))]
     pub async fn friends(&self, ctx: &Context<'_>) -> Result<Vec<AppUser>, QueryError> {
-        let friend_loader = ctx
-            .data::<DataLoader<FriendIdLoader>>()
-            .map_err(|e| QueryError::internal(e.message))?;
+        let db = ctx
+            .data::<Pool>()
+            .map_err(|e| QueryError::internal(e.message))?
+            .get()
+            .await?;
 
-        let user_loader = ctx
-            .data::<DataLoader<AppUserLoader>>()
-            .map_err(|e| QueryError::internal(e.message))?;
-
-        let friend_ids = friend_loader
-            .load_one(self.user_id)
-            .await?
-            .ok_or_else(QueryError::not_found)?;
-
-        let users = user_loader
-            .load_many(friend_ids)
-            .await?
-            .into_values()
-            .collect();
+        let users = db
+            .query(
+                r#"
+            SELECT *
+            FROM app_user
+            WHERE user_id IN (
+                    SELECT user_id_a
+                    FROM user_relation
+                    WHERE user_id_b = $1
+                    UNION
+                    SELECT user_id_b
+                    FROM user_relation
+                    WHERE user_id_a = $1
+                )
+            "#,
+                &[&self.user_id],
+            )
+            .await
+            .map_err(MappingError::from_db)?
+            .into_iter()
+            .map(|row| {
+                let user: AppUser = row.try_into()?;
+                Ok(user)
+            })
+            .collect::<Result<Vec<AppUser>, MappingError>>()?;
 
         Ok(users)
     }

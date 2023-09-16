@@ -9,12 +9,8 @@ use crate::{
 };
 
 pub fn build_with_dataloaders(pool: Pool) -> Schema {
-    let app_user_loader = DataLoader::new(AppUserLoader::new(pool.clone()), spawn);
-    let friend_id_loader = DataLoader::new(FriendIdLoader::new(pool), spawn);
-
     Schema::build(RootQuery, EmptyMutation, EmptySubscription)
-        .data(app_user_loader)
-        .data(friend_id_loader)
+        .data(pool)
         .finish()
 }
 
@@ -26,14 +22,17 @@ pub struct RootQuery;
 impl RootQuery {
     #[instrument(skip(self, ctx), err(Debug))]
     async fn user(&self, ctx: &Context<'_>, id: i32) -> Result<AppUser, QueryError> {
-        let loader = ctx
-            .data::<DataLoader<AppUserLoader>>()
-            .map_err(|e| QueryError::internal(e.message))?;
+        let db = ctx
+            .data::<Pool>()
+            .map_err(|e| QueryError::internal(e.message))?
+            .get()
+            .await?;
 
-        let user = loader
-            .load_one(id)
+        let user = db
+            .query_opt("SELECT * FROM app_user WHERE user_id = $1", &[&id])
             .await?
-            .ok_or_else(QueryError::not_found)?;
+            .ok_or_else(QueryError::not_found)?
+            .try_into()?;
 
         Ok(user)
     }

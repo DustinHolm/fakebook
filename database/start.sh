@@ -13,6 +13,4 @@ docker ps -a | grep fakebook-db > /dev/null && docker rm fakebook-db
         --rm \
         fakebook-db \
         -c log_statement=all
-
-     
 )

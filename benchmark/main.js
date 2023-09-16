@@ -66,7 +66,6 @@ const meanRequests = [UserThriceNestedFriends];
 export const mean = () => {
   const i = exec.scenario.iterationInInstance % meanRequests.length;
   const id = (exec.scenario.iterationInInstance % maxUserId) + 1;
-  console.log(id);
 
   const res = meanRequests[i](id);
 
