@@ -1,7 +1,12 @@
+use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Config, Pool, Runtime};
+use tokio::spawn;
 use tokio_postgres::NoTls;
 
-use crate::errors::fatal::FatalError;
+use crate::{
+    errors::fatal::FatalError,
+    models::app_user::{AppUserLoader, FriendIdLoader},
+};
 
 pub fn create_pool() -> Result<Pool, FatalError> {
     let mut config = Config::new();
@@ -15,4 +20,26 @@ pub fn create_pool() -> Result<Pool, FatalError> {
     let pool = config.create_pool(Some(Runtime::Tokio1), NoTls)?;
 
     Ok(pool)
+}
+
+pub struct AppLoader {
+    pub app_user: DataLoader<AppUserLoader, HashMapCache>,
+    pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
+}
+
+impl AppLoader {
+    pub fn new(pool: Pool) -> Self {
+        Self {
+            app_user: DataLoader::with_cache(
+                AppUserLoader::new(pool.clone()),
+                spawn,
+                HashMapCache::default(),
+            ),
+            friend_id: DataLoader::with_cache(
+                FriendIdLoader::new(pool.clone()),
+                spawn,
+                HashMapCache::default(),
+            ),
+        }
+    }
 }

@@ -24,7 +24,7 @@ pub struct MappingError {
 }
 
 impl MappingError {
-    pub fn from_db(error: tokio_postgres::Error) -> Self {
+    pub fn db(error: tokio_postgres::Error) -> Self {
         Self {
             reason: Reason::FromDb,
             message: error.to_string(),
