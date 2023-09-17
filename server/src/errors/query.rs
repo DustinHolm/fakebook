@@ -6,6 +6,7 @@ enum Reason {
     Other,
     NotFound,
     Loader,
+    InvalidInput,
     InternalSystem,
 }
 
@@ -15,6 +16,7 @@ impl Display for Reason {
             Reason::Other => write!(f, "Unexpected error"),
             Reason::NotFound => write!(f, "Could not find the requested data"),
             Reason::Loader => write!(f, "Encountered an error while loading from the database"),
+            Reason::InvalidInput => write!(f, "Given input had the wrong format"),
             Reason::InternalSystem => write!(f, "Internal error"),
         }
     }
@@ -37,6 +39,13 @@ impl QueryError {
         Self {
             reason: Reason::InternalSystem,
             message: Some(value.to_string()),
+        }
+    }
+
+    pub fn invalid_input(message: String) -> Self {
+        Self {
+            reason: Reason::InvalidInput,
+            message: Some(message),
         }
     }
 }

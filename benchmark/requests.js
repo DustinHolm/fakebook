@@ -5,9 +5,9 @@ export const User = (id) =>
   http.post(
     graphqlUrl,
     JSON.stringify({
-      query: `query User($id: Int) {
+      query: `query User($id: ID!) {
                 user(id: $id) {
-                  userId
+                  id
                   firstName
                   lastName
                 }
@@ -22,13 +22,13 @@ export const UserFriends = (id) =>
   http.post(
     graphqlUrl,
     JSON.stringify({
-      query: `query UserFriends($id: Int) {
+      query: `query UserFriends($id: ID!) {
                 user(id: $id) {
-                  userId
+                  id
                   firstName
                   lastName
                   friends {
-                    userId
+                    id
                     firstName
                     lastName
                   }
@@ -44,25 +44,25 @@ export const UserThriceNestedFriends = (id) =>
   http.post(
     graphqlUrl,
     JSON.stringify({
-      query: `query UserThriceNestedFriends($id: Int) {
+      query: `query UserThriceNestedFriends($id: ID!) {
                 user(id: $id) {
-                  userId
+                  id
                   firstName
                   lastName
                   friends {
-                    userId
+                    id
                     firstName
                     lastName
                     friends {
-                      userId
+                      id
                       firstName
                       lastName
                       friends {
-                        userId
+                        id
                         firstName
                         lastName
                         friends {
-                          userId
+                          id
                           firstName
                           lastName
                         }

@@ -48,7 +48,8 @@
         "panel": "dedicated",
         "focus": true
       },
-      "dependsOn": ["Build Server"]
+      "dependsOn": ["Build Server"],
+      "problemMatcher": []
     },
     {
       "label": "Run Benchmark",

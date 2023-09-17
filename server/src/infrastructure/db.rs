@@ -5,7 +5,10 @@ use tokio_postgres::NoTls;
 
 use crate::{
     errors::fatal::FatalError,
-    models::app_user::{AppUserLoader, FriendIdLoader},
+    models::{
+        app_user::{AppUserLoader, FriendIdLoader},
+        post::PostLoader,
+    },
 };
 
 pub fn create_pool() -> Result<Pool, FatalError> {
@@ -25,6 +28,7 @@ pub fn create_pool() -> Result<Pool, FatalError> {
 pub struct Loaders {
     pub app_user: DataLoader<AppUserLoader, HashMapCache>,
     pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
+    pub post: DataLoader<PostLoader, HashMapCache>,
 }
 
 impl Loaders {
@@ -37,6 +41,11 @@ impl Loaders {
             ),
             friend_id: DataLoader::with_cache(
                 FriendIdLoader::new(pool.clone()),
+                spawn,
+                HashMapCache::default(),
+            ),
+            post: DataLoader::with_cache(
+                PostLoader::new(pool.clone()),
                 spawn,
                 HashMapCache::default(),
             ),

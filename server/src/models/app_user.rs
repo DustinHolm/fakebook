@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use async_graphql::{dataloader::Loader, Context, Object};
+use async_graphql::{dataloader::Loader, Context, Object, ID};
 use axum::async_trait;
 use deadpool_postgres::Pool;
 use tokio_postgres::Row;
@@ -20,8 +20,8 @@ pub struct AppUser {
 
 #[Object]
 impl AppUser {
-    pub async fn user_id(&self) -> i32 {
-        self.user_id
+    pub async fn id(&self) -> ID {
+        ID(self.user_id.to_string())
     }
 
     pub async fn first_name(&self) -> &str {
@@ -76,8 +76,7 @@ impl Loader<i32> for AppUserLoader {
 
         let rows = db
             .query("SELECT * FROM app_user WHERE user_id = ANY ($1)", &[&ids])
-            .await
-            .map_err(MappingError::db)?;
+            .await?;
 
         let result = rows
             .into_iter()
@@ -125,10 +124,7 @@ impl Loader<i32> for FriendIdLoader {
             .await?;
 
         for id in ids {
-            let rows = db
-                .query(&statement, &[id])
-                .await
-                .map_err(MappingError::db)?;
+            let rows = db.query(&statement, &[id]).await?;
 
             let friend_ids = rows
                 .into_iter()
