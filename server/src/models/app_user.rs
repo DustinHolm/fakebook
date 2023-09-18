@@ -125,32 +125,49 @@ impl Loader<i32> for FriendIdLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(LoaderError::connection)?;
-        let mut result_map = HashMap::with_capacity(ids.len());
-        let statement = db
-            .prepare(
+
+        let relations = db
+            .query(
                 r#"
-                    SELECT user_id_a
+                    SELECT user_id_a, user_id_b
                     FROM user_relation
-                    WHERE user_id_b = $1
+                    WHERE user_id_b = ANY($1)
                     UNION
-                    SELECT user_id_b
+                    SELECT user_id_a, user_id_b
                     FROM user_relation
-                    WHERE user_id_a = $1
+                    WHERE user_id_a = ANY($1)
                 "#,
+                &[&ids],
             )
-            .await?;
+            .await?
+            .into_iter()
+            .map(|row| {
+                Ok((
+                    row.try_get(0).map_err(MappingError::db)?,
+                    row.try_get(1).map_err(MappingError::db)?,
+                ))
+            })
+            .collect::<Result<Vec<(i32, i32)>, LoaderError>>()?;
 
-        for id in ids {
-            let rows = db.query(&statement, &[id]).await?;
+        let result_map = ids
+            .into_iter()
+            .map(|id| {
+                let friends: Vec<i32> = relations
+                    .iter()
+                    .filter_map(|rel| {
+                        if &rel.0 == id {
+                            Some(rel.1)
+                        } else if &rel.1 == id {
+                            Some(rel.0)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
 
-            let friend_ids = rows
-                .into_iter()
-                .map(|row| row.try_get(0))
-                .collect::<Result<Vec<i32>, tokio_postgres::Error>>()
-                .map_err(MappingError::db)?;
-
-            result_map.insert(*id, friend_ids);
-        }
+                (*id, friends)
+            })
+            .collect();
 
         Ok(result_map)
     }
