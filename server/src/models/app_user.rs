@@ -11,6 +11,8 @@ use crate::{
     infrastructure::db::Loaders,
 };
 
+use super::post::Post;
+
 #[derive(Clone)]
 pub struct AppUser {
     user_id: i32,
@@ -32,7 +34,7 @@ impl AppUser {
         &self.last_name
     }
 
-    #[instrument(skip(self, ctx), err(Debug))]
+    #[instrument(skip_all, err(Debug))]
     pub async fn friends(&self, ctx: &Context<'_>) -> Result<Vec<AppUser>, QueryError> {
         let loaders = ctx
             .data::<Loaders>()
@@ -52,6 +54,21 @@ impl AppUser {
             .collect();
 
         Ok(users)
+    }
+
+    #[instrument(skip_all, err(Debug))]
+    pub async fn posts(&self, ctx: &Context<'_>) -> Result<Vec<Post>, QueryError> {
+        let loaders = ctx
+            .data::<Loaders>()
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        let posts = loaders
+            .posts_of_author
+            .load_one(self.user_id)
+            .await?
+            .ok_or_else(QueryError::not_found)?;
+
+        Ok(posts)
     }
 }
 

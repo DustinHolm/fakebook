@@ -12,7 +12,7 @@ use crate::{
     infrastructure::db::Loaders,
 };
 
-use super::app_user::AppUser;
+use super::{app_user::AppUser, comment::Comment};
 
 #[derive(Clone)]
 pub struct Post {
@@ -28,6 +28,7 @@ impl Post {
         ID(self.post_id.to_string())
     }
 
+    #[instrument(skip_all, err(Debug))]
     async fn author(&self, ctx: &Context<'_>) -> Result<AppUser, QueryError> {
         let loaders = ctx
             .data::<Loaders>()
@@ -46,6 +47,19 @@ impl Post {
 
     async fn content(&self) -> &str {
         &self.content
+    }
+
+    #[instrument(skip_all, err(Debug))]
+    async fn comments(&self, ctx: &Context<'_>) -> Result<Vec<Comment>, QueryError> {
+        let loaders = ctx
+            .data::<Loaders>()
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        loaders
+            .comments_of_post
+            .load_one(self.post_id)
+            .await?
+            .ok_or(QueryError::not_found())
     }
 }
 
@@ -81,6 +95,42 @@ impl Loader<i32> for PostLoader {
             .collect();
 
         result
+    }
+}
+
+pub struct PostsOfAuthorLoader {
+    pool: Pool,
+}
+
+impl PostsOfAuthorLoader {
+    pub fn new(pool: Pool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl Loader<i32> for PostsOfAuthorLoader {
+    type Value = Vec<Post>;
+    type Error = LoaderError;
+
+    #[instrument(skip(self), err(Debug))]
+    async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
+        let db = self.pool.get().await.map_err(LoaderError::connection)?;
+
+        let rows = db
+            .query("SELECT * FROM post WHERE author = ANY($1)", &[&ids])
+            .await?;
+
+        let mut result = HashMap::from_iter(ids.iter().map(|id| (*id, Vec::new())));
+
+        for row in rows {
+            let post: Post = row.try_into()?;
+            result
+                .entry(post.author)
+                .and_modify(|e: &mut Vec<Post>| e.push(post));
+        }
+
+        Ok(result)
     }
 }
 

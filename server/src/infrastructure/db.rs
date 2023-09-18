@@ -2,15 +2,18 @@ use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Config, Pool, Runtime};
 use tokio::spawn;
 use tokio_postgres::NoTls;
+use tracing::instrument;
 
 use crate::{
     errors::fatal::FatalError,
     models::{
         app_user::{AppUserLoader, FriendIdLoader},
-        post::PostLoader,
+        comment::CommentsOfPostLoader,
+        post::{PostLoader, PostsOfAuthorLoader},
     },
 };
 
+#[instrument(skip_all, err(Debug))]
 pub fn create_pool() -> Result<Pool, FatalError> {
     let mut config = Config::new();
     let port = dotenv::var("PG_PORT")?;
@@ -29,6 +32,8 @@ pub struct Loaders {
     pub app_user: DataLoader<AppUserLoader, HashMapCache>,
     pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
     pub post: DataLoader<PostLoader, HashMapCache>,
+    pub posts_of_author: DataLoader<PostsOfAuthorLoader, HashMapCache>,
+    pub comments_of_post: DataLoader<CommentsOfPostLoader, HashMapCache>,
 }
 
 impl Loaders {
@@ -46,6 +51,16 @@ impl Loaders {
             ),
             post: DataLoader::with_cache(
                 PostLoader::new(pool.clone()),
+                spawn,
+                HashMapCache::default(),
+            ),
+            posts_of_author: DataLoader::with_cache(
+                PostsOfAuthorLoader::new(pool.clone()),
+                spawn,
+                HashMapCache::default(),
+            ),
+            comments_of_post: DataLoader::with_cache(
+                CommentsOfPostLoader::new(pool.clone()),
                 spawn,
                 HashMapCache::default(),
             ),

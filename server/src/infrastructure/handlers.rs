@@ -5,6 +5,7 @@ use axum::{
     Extension,
 };
 use deadpool_postgres::Pool;
+use tracing::instrument;
 
 use crate::errors::fatal::FatalError;
 
@@ -24,6 +25,7 @@ pub async fn graphiql() -> impl IntoResponse {
     Html(GraphiQLSource::build().endpoint("/graphql").finish())
 }
 
+#[instrument(skip_all, err(Debug))]
 pub async fn health_check(pool: Extension<Pool>, _: Extension<Schema>) -> Result<(), FatalError> {
     let _ = pool.get().await?;
 
