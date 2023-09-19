@@ -95,15 +95,12 @@ impl Loader<i32> for AppUserLoader {
             .query("SELECT * FROM app_user WHERE user_id = ANY ($1)", &[&ids])
             .await?;
 
-        let result = rows
-            .into_iter()
+        rows.into_iter()
             .map(|row| {
                 let user: AppUser = row.try_into()?;
                 Ok((user.user_id, user))
             })
-            .collect();
-
-        result
+            .collect()
     }
 }
 
@@ -150,7 +147,7 @@ impl Loader<i32> for FriendIdLoader {
             .collect::<Result<Vec<(i32, i32)>, LoaderError>>()?;
 
         let result_map = ids
-            .into_iter()
+            .iter()
             .map(|id| {
                 let friends: Vec<i32> = relations
                     .iter()

@@ -1,0 +1,4 @@
+Base server         => 50_000 rps
+    + DB            => 10_000 rps
+    + DataLoaders   => 5_000 rps
+    + Logging       => 2_000 rps

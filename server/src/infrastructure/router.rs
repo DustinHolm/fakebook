@@ -22,13 +22,11 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
         .into_inner();
 
     // Wrapped bottom to top
-    let router = Router::new()
+    Router::new()
         .route("/health-check", get(handlers::health_check))
         .route(
             "/graphql",
             get(handlers::graphiql).post(handlers::graphql_handler),
         )
-        .layer(middleware);
-
-    router
+        .layer(middleware)
 }

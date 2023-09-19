@@ -26,6 +26,4 @@ async fn main() {
         .with_graceful_shutdown(shutdown::signal())
         .await
         .expect("Server should start");
-
-    ()
 }

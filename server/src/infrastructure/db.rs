@@ -18,7 +18,7 @@ pub fn create_pool() -> Result<Pool, FatalError> {
     let mut config = Config::new();
     let port = dotenv::var("PG_PORT")?;
     config.host = Some(dotenv::var("PG_HOST")?);
-    config.port = Some(u16::from_str_radix(&port, 10)?);
+    config.port = Some(port.parse()?);
     config.dbname = Some(dotenv::var("PG_DBNAME")?);
     config.user = Some(dotenv::var("PG_USER")?);
     config.password = Some(dotenv::var("PG_PASSWORD")?);
@@ -60,7 +60,7 @@ impl Loaders {
                 HashMapCache::default(),
             ),
             comments_of_post: DataLoader::with_cache(
-                CommentsOfPostLoader::new(pool.clone()),
+                CommentsOfPostLoader::new(pool),
                 spawn,
                 HashMapCache::default(),
             ),

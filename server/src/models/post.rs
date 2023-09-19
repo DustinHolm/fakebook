@@ -86,15 +86,12 @@ impl Loader<i32> for PostLoader {
             .query("SELECT * FROM post WHERE post_id = ANY($1)", &[&ids])
             .await?;
 
-        let result = rows
-            .into_iter()
+        rows.into_iter()
             .map(|row| {
                 let post: Post = row.try_into()?;
                 Ok((post.post_id, post))
             })
-            .collect();
-
-        result
+            .collect()
     }
 }
 
