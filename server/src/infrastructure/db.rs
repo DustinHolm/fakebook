@@ -1,5 +1,8 @@
+use std::ops::DerefMut;
+
 use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Config, Pool, Runtime};
+use refinery::embed_migrations;
 use tokio::spawn;
 use tokio_postgres::NoTls;
 use tracing::instrument;
@@ -12,6 +15,8 @@ use crate::{
         post::{PostLoader, PostsOfAuthorLoader},
     },
 };
+
+embed_migrations!();
 
 #[instrument(skip_all, err(Debug))]
 pub fn create_pool() -> Result<Pool, FatalError> {
@@ -26,6 +31,15 @@ pub fn create_pool() -> Result<Pool, FatalError> {
     let pool = config.create_pool(Some(Runtime::Tokio1), NoTls)?;
 
     Ok(pool)
+}
+
+#[instrument(skip_all, err(Debug))]
+pub async fn migrate(pool: &Pool) -> Result<(), FatalError> {
+    let mut db = pool.get().await?;
+    migrations::runner()
+        .run_async(db.deref_mut().deref_mut())
+        .await?;
+    Ok(())
 }
 
 pub struct Loaders {
