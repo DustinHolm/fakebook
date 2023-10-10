@@ -81,10 +81,11 @@ impl Loader<i32> for PostLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(LoaderError::connection)?;
-
-        let rows = db
-            .query("SELECT * FROM post WHERE post_id = ANY($1)", &[&ids])
+        let stmt = db
+            .prepare_cached("SELECT * FROM post WHERE post_id = ANY($1)")
             .await?;
+
+        let rows = db.query(&stmt, &[&ids]).await?;
 
         rows.into_iter()
             .map(|row| {
@@ -113,10 +114,11 @@ impl Loader<i32> for PostsOfAuthorLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(LoaderError::connection)?;
-
-        let rows = db
-            .query("SELECT * FROM post WHERE author = ANY($1)", &[&ids])
+        let stmt = db
+            .prepare_cached("SELECT * FROM post WHERE author = ANY($1)")
             .await?;
+
+        let rows = db.query(&stmt, &[&ids]).await?;
 
         let mut result = HashMap::from_iter(ids.iter().map(|id| (*id, Vec::new())));
 

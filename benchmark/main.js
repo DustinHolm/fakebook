@@ -8,7 +8,7 @@ import { User, UserFriends, UserThriceNestedFriends } from "./requests.js";
 export const options = {
   thresholds: {
     checks: ["rate == 1"],
-    http_req_duration: ["max < 500", "p(99) < 300", "med < 200"],
+    http_req_duration: ["max < 500", "p(95) < 330", "med < 150"],
   },
   scenarios: {
     smoke: {

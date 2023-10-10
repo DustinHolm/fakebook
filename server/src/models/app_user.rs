@@ -90,10 +90,11 @@ impl Loader<i32> for AppUserLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(LoaderError::connection)?;
-
-        let rows = db
-            .query("SELECT * FROM app_user WHERE user_id = ANY ($1)", &[&ids])
+        let stmt = db
+            .prepare_cached("SELECT * FROM app_user WHERE user_id = ANY ($1)")
             .await?;
+
+        let rows = db.query(&stmt, &[&ids]).await?;
 
         rows.into_iter()
             .map(|row| {
@@ -122,9 +123,8 @@ impl Loader<i32> for FriendIdLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(LoaderError::connection)?;
-
-        let relations = db
-            .query(
+        let stmt = db
+            .prepare_cached(
                 r#"
                     SELECT user_id_a, user_id_b
                     FROM user_relation
@@ -134,8 +134,11 @@ impl Loader<i32> for FriendIdLoader {
                     FROM user_relation
                     WHERE user_id_a = ANY($1)
                 "#,
-                &[&ids],
             )
+            .await?;
+
+        let relations = db
+            .query(&stmt, &[&ids])
             .await?
             .into_iter()
             .map(|row| {
