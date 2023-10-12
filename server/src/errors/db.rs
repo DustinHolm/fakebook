@@ -22,12 +22,12 @@ impl Display for Reason {
 }
 
 #[derive(Clone)]
-pub struct LoaderError {
+pub struct DbError {
     reason: Reason,
     message: String,
 }
 
-impl LoaderError {
+impl DbError {
     pub fn connection(value: PoolError) -> Self {
         Self {
             reason: Reason::ConnectionFailed,
@@ -36,7 +36,7 @@ impl LoaderError {
     }
 }
 
-impl From<MappingError> for LoaderError {
+impl From<MappingError> for DbError {
     fn from(value: MappingError) -> Self {
         Self {
             reason: Reason::Mapping,
@@ -45,9 +45,9 @@ impl From<MappingError> for LoaderError {
     }
 }
 
-impl<E: std::error::Error + 'static> Error<E> for LoaderError {}
+impl<E: std::error::Error + 'static> Error<E> for DbError {}
 
-impl<E> From<E> for LoaderError
+impl<E> From<E> for DbError
 where
     E: std::error::Error + 'static,
 {
@@ -59,13 +59,13 @@ where
     }
 }
 
-impl Debug for LoaderError {
+impl Debug for DbError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}: {}", self.reason, self.message)
     }
 }
 
-impl Display for LoaderError {
+impl Display for DbError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.reason)
     }

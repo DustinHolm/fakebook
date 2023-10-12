@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use async_graphql::{dataloader::Loader, Context, Object, ID};
+use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
 use deadpool_postgres::Pool;
 use tokio_postgres::Row;
 use tracing::instrument;
 
 use crate::{
-    errors::{loader::LoaderError, mapping::MappingError, query::QueryError},
-    infrastructure::db::Loaders,
+    errors::{db::DbError, mapping::MappingError, query::QueryError},
+    infrastructure::db::{Loaders, Saver},
 };
 
 use super::post::Post;
@@ -85,11 +85,11 @@ impl AppUserLoader {
 #[async_trait]
 impl Loader<i32> for AppUserLoader {
     type Value = AppUser;
-    type Error = LoaderError;
+    type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(LoaderError::connection)?;
+        let db = self.pool.get().await.map_err(DbError::connection)?;
         let stmt = db
             .prepare_cached("SELECT * FROM app_user WHERE user_id = ANY ($1)")
             .await?;
@@ -118,11 +118,11 @@ impl FriendIdLoader {
 #[async_trait]
 impl Loader<i32> for FriendIdLoader {
     type Value = Vec<i32>;
-    type Error = LoaderError;
+    type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(LoaderError::connection)?;
+        let db = self.pool.get().await.map_err(DbError::connection)?;
         let stmt = db
             .prepare_cached(
                 r#"
@@ -147,7 +147,7 @@ impl Loader<i32> for FriendIdLoader {
                     row.try_get(1).map_err(MappingError::db)?,
                 ))
             })
-            .collect::<Result<Vec<(i32, i32)>, LoaderError>>()?;
+            .collect::<Result<Vec<(i32, i32)>, DbError>>()?;
 
         let result_map = ids
             .iter()
@@ -170,6 +170,39 @@ impl Loader<i32> for FriendIdLoader {
             .collect();
 
         Ok(result_map)
+    }
+}
+
+#[derive(InputObject, Debug)]
+pub struct AppUserInput {
+    pub first_name: String,
+    pub last_name: String,
+}
+
+#[async_trait]
+impl Saver for AppUserInput {
+    type Saved = AppUser;
+    type Error = DbError;
+
+    #[instrument(skip(pool), err(Debug))]
+    async fn save(&self, pool: &Pool) -> Result<Self::Saved, Self::Error> {
+        let db = pool.get().await?;
+
+        let stmt = db
+            .prepare_cached(
+                r"
+                    INSERT INTO app_user (first_name, last_name)
+                    VALUES ($1, $2)
+                    RETURNING *
+                ",
+            )
+            .await?;
+
+        let row = db
+            .query_one(&stmt, &[&self.first_name, &self.last_name])
+            .await?;
+
+        Ok(row.try_into()?)
     }
 }
 

@@ -8,7 +8,7 @@ use tokio_postgres::Row;
 use tracing::instrument;
 
 use crate::{
-    errors::{loader::LoaderError, mapping::MappingError, query::QueryError},
+    errors::{db::DbError, mapping::MappingError, query::QueryError},
     infrastructure::db::Loaders,
 };
 
@@ -76,11 +76,11 @@ impl PostLoader {
 #[async_trait]
 impl Loader<i32> for PostLoader {
     type Value = Post;
-    type Error = LoaderError;
+    type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(LoaderError::connection)?;
+        let db = self.pool.get().await.map_err(DbError::connection)?;
         let stmt = db
             .prepare_cached("SELECT * FROM post WHERE post_id = ANY($1)")
             .await?;
@@ -109,11 +109,11 @@ impl PostsOfAuthorLoader {
 #[async_trait]
 impl Loader<i32> for PostsOfAuthorLoader {
     type Value = Vec<Post>;
-    type Error = LoaderError;
+    type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(LoaderError::connection)?;
+        let db = self.pool.get().await.map_err(DbError::connection)?;
         let stmt = db
             .prepare_cached("SELECT * FROM post WHERE author = ANY($1)")
             .await?;

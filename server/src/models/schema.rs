@@ -1,11 +1,15 @@
 use std::num::ParseIntError;
 
 use async_graphql::{Context, Object, ID};
+use deadpool_postgres::Pool;
 use tracing::instrument;
 
-use crate::{errors::query::QueryError, infrastructure::db::Loaders};
+use crate::{
+    errors::query::QueryError,
+    infrastructure::db::{Loaders, Saver},
+};
 
-use super::app_user::AppUser;
+use super::app_user::{AppUser, AppUserInput};
 
 pub struct RootQuery;
 
@@ -28,5 +32,22 @@ impl RootQuery {
             .ok_or_else(QueryError::not_found)?;
 
         Ok(user)
+    }
+}
+
+pub struct RootMutation;
+
+#[Object]
+impl RootMutation {
+    async fn create_user(
+        &self,
+        ctx: &Context<'_>,
+        user: AppUserInput,
+    ) -> Result<AppUser, QueryError> {
+        let pool = ctx
+            .data::<Pool>()
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        Ok(user.save(pool).await?)
     }
 }

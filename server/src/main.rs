@@ -16,11 +16,12 @@ async fn main() {
 
     let pool = db::create_pool().expect("Pool should have been created");
     db::migrate(&pool).await.expect("Migrations should succeed");
-    let schema = schema::new();
+    let schema = schema::new(pool.clone());
     let router = router::new(pool, schema);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("Listening on {}", addr);
+    tracing::info!("Visit GraphiQL: http://{}/graphql", addr);
 
     Server::bind(&addr)
         .serve(router.into_make_service())

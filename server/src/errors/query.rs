@@ -1,11 +1,11 @@
 use std::fmt::{Debug, Display};
 
-use super::{base::Error, loader::LoaderError, mapping::MappingError};
+use super::{base::Error, db::DbError, mapping::MappingError};
 
 enum Reason {
     Other,
     NotFound,
-    Loader,
+    Db,
     InvalidInput,
     InternalSystem,
 }
@@ -15,7 +15,7 @@ impl Display for Reason {
         match self {
             Reason::Other => write!(f, "Unexpected error"),
             Reason::NotFound => write!(f, "Could not find the requested data"),
-            Reason::Loader => write!(f, "Encountered an error while loading from the database"),
+            Reason::Db => write!(f, "Encountered an error while accessing the database"),
             Reason::InvalidInput => write!(f, "Given input had the wrong format"),
             Reason::InternalSystem => write!(f, "Internal error"),
         }
@@ -59,10 +59,10 @@ impl From<MappingError> for QueryError {
     }
 }
 
-impl From<LoaderError> for QueryError {
-    fn from(value: LoaderError) -> Self {
+impl From<DbError> for QueryError {
+    fn from(value: DbError) -> Self {
         Self {
-            reason: Reason::Loader,
+            reason: Reason::Db,
             message: Some(value.to_string()),
         }
     }
