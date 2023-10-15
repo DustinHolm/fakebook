@@ -12,7 +12,7 @@ use crate::infrastructure::{db, logging, router, schema, shutdown};
 async fn main() {
     dotenv::dotenv().expect(".env file should be available");
 
-    logging::init();
+    let _guard = logging::init(); // Guard flushes when main/server stops
 
     let pool = db::create_pool().expect("Pool should have been created");
     db::migrate(&pool).await.expect("Migrations should succeed");
