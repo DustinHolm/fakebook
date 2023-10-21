@@ -90,6 +90,7 @@ impl Loader<i32> for AppUserLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
+
         let stmt = db
             .prepare_cached("SELECT * FROM app_user WHERE user_id = ANY ($1)")
             .await?;
@@ -123,6 +124,7 @@ impl Loader<i32> for FriendIdLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
+
         let stmt = db
             .prepare_cached(
                 r#"
@@ -179,14 +181,10 @@ pub struct AppUserInput {
     pub last_name: String,
 }
 
-#[async_trait]
-impl Saver for AppUserInput {
-    type Saved = AppUser;
-    type Error = DbError;
-
-    #[instrument(skip(pool), err(Debug))]
-    async fn save(&self, pool: &Pool) -> Result<Self::Saved, Self::Error> {
-        let db = pool.get().await?;
+impl Saver {
+    #[instrument(skip(self), err(Debug))]
+    pub async fn save_user(&self, user: &AppUserInput) -> Result<AppUser, DbError> {
+        let db = self.pool.get().await?;
 
         let stmt = db
             .prepare_cached(
@@ -199,7 +197,7 @@ impl Saver for AppUserInput {
             .await?;
 
         let row = db
-            .query_one(&stmt, &[&self.first_name, &self.last_name])
+            .query_one(&stmt, &[&user.first_name, &user.last_name])
             .await?;
 
         Ok(row.try_into()?)

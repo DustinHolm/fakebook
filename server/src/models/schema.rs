@@ -1,7 +1,6 @@
 use std::num::ParseIntError;
 
 use async_graphql::{Context, Object, ID};
-use deadpool_postgres::Pool;
 use tracing::instrument;
 
 use crate::{
@@ -9,7 +8,11 @@ use crate::{
     infrastructure::db::{Loaders, Saver},
 };
 
-use super::app_user::{AppUser, AppUserInput};
+use super::{
+    app_user::{AppUser, AppUserInput},
+    comment::{Comment, CommentInput},
+    post::{Post, PostInput},
+};
 
 pub struct RootQuery;
 
@@ -39,15 +42,38 @@ pub struct RootMutation;
 
 #[Object]
 impl RootMutation {
+    #[instrument(skip(self, ctx), err(Debug))]
     async fn create_user(
         &self,
         ctx: &Context<'_>,
         user: AppUserInput,
     ) -> Result<AppUser, QueryError> {
-        let pool = ctx
-            .data::<Pool>()
+        let saver = ctx
+            .data::<Saver>()
             .map_err(|e| QueryError::internal(e.message))?;
 
-        Ok(user.save(pool).await?)
+        Ok(saver.save_user(&user).await?)
+    }
+
+    #[instrument(skip(self, ctx), err(Debug))]
+    async fn create_post(&self, ctx: &Context<'_>, post: PostInput) -> Result<Post, QueryError> {
+        let saver = ctx
+            .data::<Saver>()
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        Ok(saver.save_post(&post).await?)
+    }
+
+    #[instrument(skip(self, ctx), err(Debug))]
+    async fn create_comment(
+        &self,
+        ctx: &Context<'_>,
+        comment: CommentInput,
+    ) -> Result<Comment, QueryError> {
+        let saver = ctx
+            .data::<Saver>()
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        Ok(saver.save_comment(&comment).await?)
     }
 }

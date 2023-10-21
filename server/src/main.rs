@@ -16,7 +16,7 @@ async fn main() {
 
     let pool = db::create_pool().expect("Pool should have been created");
     db::migrate(&pool).await.expect("Migrations should succeed");
-    let schema = schema::new(pool.clone());
+    let schema = schema::new(db::Saver::new(pool.clone()));
     let router = router::new(pool, schema);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

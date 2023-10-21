@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use async_graphql::{dataloader::Loader, Context, Object, ID};
+use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
 use deadpool_postgres::Pool;
 use time::OffsetDateTime;
@@ -9,7 +9,7 @@ use tracing::instrument;
 
 use crate::{
     errors::{db::DbError, mapping::MappingError, query::QueryError},
-    infrastructure::db::Loaders,
+    infrastructure::db::{Loaders, Saver},
 };
 
 use super::{app_user::AppUser, post::Post};
@@ -82,6 +82,7 @@ impl Loader<i32> for CommentsOfPostLoader {
     #[instrument(skip(self), err(Debug))]
     async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
+
         let stmt = db
             .prepare_cached("SELECT * FROM comment WHERE referenced_post = ANY($1)")
             .await?;
@@ -98,6 +99,46 @@ impl Loader<i32> for CommentsOfPostLoader {
         }
 
         Ok(result)
+    }
+}
+
+#[derive(Debug, InputObject)]
+pub struct CommentInput {
+    author: i32,
+    content: String,
+    referenced_post: i32,
+}
+
+impl Saver {
+    #[instrument(skip(self), err(Debug))]
+    pub async fn save_comment(&self, comment: &CommentInput) -> Result<Comment, DbError> {
+        let db = self.pool.get().await?;
+
+        let now = OffsetDateTime::now_utc();
+
+        let stmt = db
+            .prepare_cached(
+                r"
+                    INSERT INTO comment (author, created_on, content, referenced_post)
+                    VALUES ($1, $2, $3, $4)
+                    RETURNING *
+                ",
+            )
+            .await?;
+
+        let row = db
+            .query_one(
+                &stmt,
+                &[
+                    &comment.author,
+                    &now,
+                    &comment.content,
+                    &comment.referenced_post,
+                ],
+            )
+            .await?;
+
+        Ok(row.try_into()?)
     }
 }
 

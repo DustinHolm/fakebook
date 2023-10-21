@@ -1,11 +1,12 @@
 use async_graphql::EmptySubscription;
-use deadpool_postgres::Pool;
 
 use crate::models::schema::{RootMutation, RootQuery};
 
-pub fn new(pool: Pool) -> Schema {
+use super::db::Saver;
+
+pub fn new(savor: Saver) -> Schema {
     Schema::build(RootQuery, RootMutation, EmptySubscription)
-        .data(pool)
+        .data(savor)
         .finish()
 }
 

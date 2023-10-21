@@ -1,7 +1,6 @@
 use std::ops::DerefMut;
 
 use async_graphql::dataloader::{DataLoader, HashMapCache};
-use axum::async_trait;
 use deadpool_postgres::{Config, Pool, Runtime};
 use refinery::embed_migrations;
 use tokio::spawn;
@@ -83,10 +82,12 @@ impl Loaders {
     }
 }
 
-#[async_trait]
-pub trait Saver {
-    type Saved;
-    type Error;
+pub struct Saver {
+    pub pool: Pool,
+}
 
-    async fn save(&self, pool: &Pool) -> Result<Self::Saved, Self::Error>;
+impl Saver {
+    pub fn new(pool: Pool) -> Self {
+        Self { pool }
+    }
 }
