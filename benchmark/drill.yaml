@@ -19,6 +19,7 @@ plan:
           "query": "{
             user(id: $id) {
               id
+              pid
               firstName
               lastName
             }

@@ -11,7 +11,7 @@ const postQuery = graphql`
       firstName
       lastName
       posts {
-        id
+        pid
         content
       }
     }
@@ -25,7 +25,7 @@ function _HomePage() {
     <Box sx={{ backgroundColor: "white" }}>
       {user.posts.map((post) => (
         <Post
-          key={post.id}
+          key={post.pid}
           avatarProps={{ children: user.firstName[0] + user.lastName[0] }}
           userName={user.firstName + " " + user.lastName}
           message={post.content}

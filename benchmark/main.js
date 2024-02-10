@@ -3,7 +3,12 @@ import http from "k6/http";
 import exec from "k6/execution";
 import { check } from "k6";
 import { healthUrl } from "./urls.js";
-import { User, UserFriends, UserThriceNestedFriends } from "./requests.js";
+import {
+  User,
+  UserFriends,
+  UserFriendsPosts,
+  UserThriceNestedFriends,
+} from "./requests.js";
 
 export const options = {
   thresholds: {
@@ -52,7 +57,7 @@ export const smoke = () => {
   check(res, { "response did not contain error": (r) => r.status == 200 });
 };
 
-const normalRequests = [User, UserFriends];
+const normalRequests = [User, UserFriends, UserFriendsPosts];
 export const normal = () => {
   const i = exec.scenario.iterationInInstance % normalRequests.length;
   const id = (exec.scenario.iterationInInstance % maxUserId) + 1;

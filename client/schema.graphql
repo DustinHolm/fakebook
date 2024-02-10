@@ -1,5 +1,9 @@
 type AppUser {
+  """
+  Id used by relay. Must be globally unique.
+  """
   id: ID!
+  pid: ID!
   firstName: String!
   lastName: String!
   friends: [AppUser!]!
@@ -12,7 +16,11 @@ input AppUserInput {
 }
 
 type Comment {
+  """
+  Id used by relay. Must be globally unique.
+  """
   id: ID!
+  pid: ID!
   referencedPost: Post!
   author: AppUser!
   createdOn: DateTime!
@@ -36,7 +44,11 @@ format, but it is always normalized to the UTC (Z) offset, e.g.
 scalar DateTime
 
 type Post {
+  """
+  Id used by relay. Must be globally unique.
+  """
   id: ID!
+  pid: ID!
   author: AppUser!
   createdOn: DateTime!
   content: String!

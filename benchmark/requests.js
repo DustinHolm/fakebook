@@ -40,6 +40,31 @@ export const UserFriends = (id) =>
     })
   );
 
+export const UserFriendsPosts = (id) =>
+  http.post(
+    graphqlUrl,
+    JSON.stringify({
+      query: `query UserFriendsPosts($id: ID!) {
+                user(id: $id) {
+                  id
+                  firstName
+                  lastName
+                  friends {
+                    id
+                    firstName
+                    lastName
+                    posts {
+                      content
+                    }
+                  }
+                }
+              }`,
+      variables: {
+        id: id,
+      },
+    })
+  );
+
 export const UserThriceNestedFriends = (id) =>
   http.post(
     graphqlUrl,

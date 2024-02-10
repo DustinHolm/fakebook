@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use deadpool_postgres::Pool;
 use tokio_postgres::Row;
 use tracing::instrument;
@@ -22,7 +23,14 @@ pub struct AppUser {
 
 #[Object]
 impl AppUser {
+    /// Id used by relay. Must be globally unique.
     pub async fn id(&self) -> ID {
+        let combined = self.user_id.to_string() + "AppUser";
+
+        ID(STANDARD.encode(combined))
+    }
+
+    pub async fn pid(&self) -> ID {
         ID(self.user_id.to_string())
     }
 

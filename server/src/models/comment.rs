@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
@@ -25,7 +26,14 @@ pub struct Comment {
 
 #[Object]
 impl Comment {
+    /// Id used by relay. Must be globally unique.
     async fn id(&self) -> ID {
+        let combined = self.comment_id.to_string() + "Comment";
+
+        ID(STANDARD.encode(combined))
+    }
+
+    async fn pid(&self) -> ID {
         ID(self.comment_id.to_string())
     }
 
