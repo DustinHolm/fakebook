@@ -3,8 +3,8 @@ use deadpool_postgres::Pool;
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::{
-    catch_panic::CatchPanicLayer, compression::CompressionLayer, timeout::TimeoutLayer,
-    trace::TraceLayer,
+    catch_panic::CatchPanicLayer, compression::CompressionLayer, cors::CorsLayer,
+    timeout::TimeoutLayer, trace::TraceLayer,
 };
 
 use super::handlers;
@@ -17,6 +17,7 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
         .layer(CatchPanicLayer::new())
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(CompressionLayer::new())
+        .layer(CorsLayer::permissive())
         .layer(Extension(schema))
         .layer(Extension(pool))
         .into_inner();

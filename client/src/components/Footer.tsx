@@ -1,7 +1,7 @@
 import { Stack, Box } from "@mui/joy";
 import { memo } from "react";
 
-function Footer() {
+function _Footer() {
   return (
     <Stack justifyContent={"space-between"} direction={"row"}>
       <Box>Left</Box>
@@ -10,4 +10,4 @@ function Footer() {
   );
 }
 
-export default memo(Footer);
+export const Footer = memo(_Footer);

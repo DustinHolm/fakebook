@@ -1,7 +1,7 @@
 import { Box, Stack } from "@mui/joy";
 import { memo } from "react";
 
-function Header() {
+function _Header() {
   return (
     <Stack justifyContent={"space-between"} direction={"row"}>
       <Box>Left</Box>
@@ -10,4 +10,4 @@ function Header() {
   );
 }
 
-export default memo(Header);
+export const Header = memo(_Header);

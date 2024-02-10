@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { Outlet } from "react-router";
-import Body from "../../components/Body";
+import { Body } from "../../components/Body";
 
-function BodyPage() {
+function _BodyPage() {
   return (
     <Body>
       <Outlet />
@@ -10,4 +10,4 @@ function BodyPage() {
   );
 }
 
-export default memo(BodyPage);
+export const BodyPage = memo(_BodyPage);

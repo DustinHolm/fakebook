@@ -1,9 +1,9 @@
 import { ReactNode, memo } from "react";
 import { Box } from "@mui/joy";
-import Header from "./Header";
-import Footer from "./Footer";
+import { Header } from "./Header";
+import { Footer } from "./Footer";
 
-function Body(props: { children: ReactNode }) {
+function _Body(props: { children: ReactNode }) {
   return (
     <Box sx={{ backgroundColor: "#ee99ee" }}>
       <Header />
@@ -13,4 +13,4 @@ function Body(props: { children: ReactNode }) {
   );
 }
 
-export default memo(Body);
+export const Body = memo(_Body);

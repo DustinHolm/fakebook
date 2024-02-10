@@ -10,6 +10,7 @@ use crate::infrastructure::{db, logging, router, schema, shutdown};
 
 #[tokio::main]
 async fn main() {
+    schema::save_schema("./schema.graphql").expect("Should have written schema to file");
     dotenv::dotenv().expect(".env file should be available");
 
     logging::init();

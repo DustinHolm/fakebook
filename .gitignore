@@ -1,2 +1,8 @@
-# Build files
+# Build files and dependencies
 /server/target
+/client/node_modules
+/client/.swc
+
+# Generated
+/server/schema.graphql
+/client/**/*.graphql.ts

@@ -1,18 +1,11 @@
-import {
-  Avatar,
-  AvatarProps,
-  Button,
-  Card,
-  CardContent,
-  Typography,
-} from "@mui/joy";
+import { Avatar, AvatarProps, Card, CardContent, Typography } from "@mui/joy";
 import { ReactNode, memo } from "react";
 
-function Post(props: {
+function _Post(props: {
   avatarProps: AvatarProps;
   userName: string;
   message: string;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <Card>
@@ -25,9 +18,9 @@ function Post(props: {
         <Typography>{props.message}</Typography>
       </CardContent>
 
-      <CardContent>{props.children}</CardContent>
+      {props.children && <CardContent>{props.children}</CardContent>}
     </Card>
   );
 }
 
-export default memo(Post);
+export const Post = memo(_Post);
