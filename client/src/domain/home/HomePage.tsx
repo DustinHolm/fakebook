@@ -1,7 +1,8 @@
-import {  memo } from "react"
+import { Box } from "@mui/joy";
+import { memo } from "react";
 
 function HomePage() {
-  return "hi"
+  return <Box sx={{ backgroundColor: "white" }}>Hi!</Box>;
 }
 
-export default memo(HomePage)
+export default memo(HomePage);

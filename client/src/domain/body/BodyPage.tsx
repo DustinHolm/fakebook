@@ -1,10 +1,13 @@
-import { Box } from "@mui/joy"
-import { memo } from "react"
+import { memo } from "react";
+import { Outlet } from "react-router";
+import Body from "../../components/Body";
 
 function BodyPage() {
-  return <Box>
-
-  </Box>
+  return (
+    <Body>
+      <Outlet />
+    </Body>
+  );
 }
 
-export default memo(BodyPage)
+export default memo(BodyPage);
