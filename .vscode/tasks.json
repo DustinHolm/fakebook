@@ -52,6 +52,36 @@
       "problemMatcher": []
     },
     {
+      "label": "Build Relay",
+      "type": "shell",
+      "command": "npm run relay",
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      },
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Client",
+      "type": "shell",
+      "command": "npm run start",
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      },
+      "presentation": {
+        "panel": "dedicated"
+      },
+      "dependsOn": ["Build Relay"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Everything",
+      "dependsOn": ["Start DB", "Start Server", "Start Client"],
+      "problemMatcher": []
+    },
+    {
       "label": "Run Benchmark",
       "dependsOn": ["Start DB", "Start Server", "Benchmark"],
       "problemMatcher": []
