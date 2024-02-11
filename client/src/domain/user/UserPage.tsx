@@ -1,9 +1,8 @@
-import { Box, Button } from "@mui/joy";
+import { Stack } from "@mui/joy";
 import { Suspense, memo } from "react";
 import { graphql } from "relay-runtime";
 import { Post } from "../../components/Post";
 import { UserPageQuery } from "./__generated__/UserPageQuery.graphql";
-import { useNavigate, useParams } from "react-router";
 import { DateTime } from "../date_time/DateTime";
 import { usePreloadedRoute } from "../../util/usePreloadRoute";
 
@@ -22,15 +21,10 @@ export const userPageQuery = graphql`
 `;
 
 function _UserPage() {
-  const navigate = useNavigate();
-  const { userId } = useParams();
   const { user } = usePreloadedRoute<UserPageQuery>(userPageQuery);
 
   return (
-    <Box sx={{ backgroundColor: "white" }}>
-      <Button onClick={() => navigate("/user/" + (Number(userId) + 1))}>
-        Next
-      </Button>
+    <Stack gap={2}>
       {user.posts.map((post) => (
         <Post
           key={post.pid}
@@ -39,7 +33,7 @@ function _UserPage() {
           createdOn={DateTime.parse(post.createdOn)}
         />
       ))}
-    </Box>
+    </Stack>
   );
 }
 

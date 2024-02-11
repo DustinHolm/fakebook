@@ -1,4 +1,4 @@
-import { Box } from "@mui/joy";
+import { Stack } from "@mui/joy";
 import { memo, useMemo } from "react";
 import { graphql } from "relay-runtime";
 import { Post } from "../../components/Post";
@@ -9,6 +9,15 @@ import { usePreloadedRoute } from "../../util/usePreloadRoute";
 export const homePageQuery = graphql`
   query HomePageQuery($id: ID!) {
     user(id: $id) {
+      posts {
+        pid
+        author {
+          firstName
+          lastName
+        }
+        createdOn
+        content
+      }
       friends {
         posts {
           pid
@@ -28,13 +37,15 @@ function _HomePage() {
   const { user } = usePreloadedRoute<HomePageQuery>(homePageQuery);
 
   const posts = useMemo(() => {
-    const posts = user.friends.flatMap((friend) => friend.posts);
+    const posts = user.friends
+      .flatMap((friend) => friend.posts)
+      .concat(user.posts);
     posts.sort((a, b) => b.createdOn.localeCompare(a.createdOn));
     return posts;
   }, [user]);
 
   return (
-    <Box sx={{ backgroundColor: "white" }}>
+    <Stack gap={2}>
       {posts.map((post) => (
         <Post
           key={post.pid}
@@ -43,7 +54,7 @@ function _HomePage() {
           message={post.content}
         />
       ))}
-    </Box>
+    </Stack>
   );
 }
 
