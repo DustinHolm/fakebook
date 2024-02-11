@@ -1,33 +1,45 @@
 import { Box } from "@mui/joy";
-import { memo } from "react";
-import { useLazyLoadQuery } from "react-relay";
+import { memo, useMemo } from "react";
 import { graphql } from "relay-runtime";
 import { Post } from "../../components/Post";
 import { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
+import { DateTime } from "../date_time/DateTime";
+import { usePreloadedRoute } from "../../util/usePreloadRoute";
 
-const postQuery = graphql`
-  query HomePageQuery {
-    user(id: 1) {
-      firstName
-      lastName
-      posts {
-        pid
-        content
+export const homePageQuery = graphql`
+  query HomePageQuery($id: ID!) {
+    user(id: $id) {
+      friends {
+        posts {
+          pid
+          author {
+            firstName
+            lastName
+          }
+          createdOn
+          content
+        }
       }
     }
   }
 `;
 
 function _HomePage() {
-  const { user } = useLazyLoadQuery<HomePageQuery>(postQuery, {});
+  const { user } = usePreloadedRoute<HomePageQuery>(homePageQuery);
+
+  const posts = useMemo(() => {
+    const posts = user.friends.flatMap((friend) => friend.posts);
+    posts.sort((a, b) => b.createdOn.localeCompare(a.createdOn));
+    return posts;
+  }, [user]);
 
   return (
     <Box sx={{ backgroundColor: "white" }}>
-      {user.posts.map((post) => (
+      {posts.map((post) => (
         <Post
           key={post.pid}
-          avatarProps={{ children: user.firstName[0] + user.lastName[0] }}
-          userName={user.firstName + " " + user.lastName}
+          user={post.author}
+          createdOn={DateTime.parse(post.createdOn)}
           message={post.content}
         />
       ))}

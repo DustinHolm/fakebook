@@ -1,18 +1,26 @@
-import { Avatar, AvatarProps, Card, CardContent, Typography } from "@mui/joy";
+import { Avatar, Card, CardContent, Stack, Typography } from "@mui/joy";
 import { ReactNode, memo } from "react";
+import { DateTime } from "../domain/date_time/DateTime";
 
 function _Post(props: {
-  avatarProps: AvatarProps;
-  userName: string;
+  user: { firstName: string; lastName: string };
+  createdOn: Date;
   message: string;
   children?: ReactNode;
 }) {
   return (
     <Card>
-      <CardContent orientation={"horizontal"}>
-        <Avatar {...props.avatarProps} />
-        <Typography>{props.userName}</Typography>
-      </CardContent>
+      <Stack direction={"row"} justifyContent={"space-between"}>
+        <Stack direction={"row"} spacing={1} alignItems={"center"}>
+          <Avatar>{props.user.firstName[0] + props.user.lastName[0]}</Avatar>
+
+          <Typography>
+            {props.user.firstName + " " + props.user.lastName}
+          </Typography>
+        </Stack>
+
+        <Typography>{DateTime.format(props.createdOn)}</Typography>
+      </Stack>
 
       <CardContent>
         <Typography>{props.message}</Typography>
