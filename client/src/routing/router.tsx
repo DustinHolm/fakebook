@@ -4,6 +4,7 @@ import { HomePage, homePageQuery } from "$domain/home/HomePage";
 import { UserPage, userPageQuery } from "$domain/user/UserPage";
 import { loadQuery } from "react-relay";
 import { relayEnvironment } from "../relayEnvironment";
+import { ErrorFallback } from "./ErrorFallback";
 
 export const router = createBrowserRouter([
   {
@@ -27,5 +28,6 @@ export const router = createBrowserRouter([
         },
       },
     ],
+    errorElement: <ErrorFallback />,
   },
 ]);
