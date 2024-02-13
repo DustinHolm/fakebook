@@ -1,32 +1,18 @@
-import { Stack } from "@mui/joy";
 import { memo, useMemo } from "react";
 import { graphql } from "relay-runtime";
-import { Post } from "../../components/Post";
-import { HomePageQuery } from "./__generated__/HomePageQuery.graphql";
-import { DateTime } from "../date_time/DateTime";
-import { usePreloadedRoute } from "../../util/usePreloadRoute";
+import { usePreloadedRoute } from "$util/usePreloadRoute";
+import { HomePageQuery } from "$schemas/HomePageQuery.graphql";
+import { PostList } from "$domain/posts/PostList";
 
 export const homePageQuery = graphql`
   query HomePageQuery($id: ID!) {
     user(id: $id) {
       posts {
-        pid
-        author {
-          firstName
-          lastName
-        }
-        createdOn
-        content
+        ...PostList_post
       }
       friends {
         posts {
-          pid
-          author {
-            firstName
-            lastName
-          }
-          createdOn
-          content
+          ...PostList_post
         }
       }
     }
@@ -36,26 +22,12 @@ export const homePageQuery = graphql`
 function _HomePage() {
   const { user } = usePreloadedRoute<HomePageQuery>(homePageQuery);
 
-  const posts = useMemo(() => {
-    const posts = user.friends
-      .flatMap((friend) => friend.posts)
-      .concat(user.posts);
-    posts.sort((a, b) => b.createdOn.localeCompare(a.createdOn));
-    return posts;
-  }, [user]);
-
-  return (
-    <Stack gap={2}>
-      {posts.map((post) => (
-        <Post
-          key={post.pid}
-          user={post.author}
-          createdOn={DateTime.parse(post.createdOn)}
-          message={post.content}
-        />
-      ))}
-    </Stack>
+  const posts = useMemo(
+    () => user.friends.flatMap((friend) => friend.posts).concat(user.posts),
+    [user]
   );
+
+  return <PostList data={posts} />;
 }
 
 export const HomePage = memo(_HomePage);

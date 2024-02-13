@@ -1,11 +1,13 @@
 import { ReactNode, memo } from "react";
 import { Box, Stack } from "@mui/joy";
-import { Header } from "./Header";
-import { Footer } from "./Footer";
+import { Header } from "$components/Header";
+import { Footer } from "$components/Footer";
 
 const HEADER_HEIGHT = "64px";
 
-function _Body(props: { children: ReactNode }) {
+type BodyProps = { children: ReactNode };
+
+function _Body(props: BodyProps) {
   return (
     <Stack direction={"column"} sx={{ height: "100svh" }}>
       <Header height={HEADER_HEIGHT} />

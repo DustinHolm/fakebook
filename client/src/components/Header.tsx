@@ -1,7 +1,9 @@
 import { Box, Stack } from "@mui/joy";
 import { memo } from "react";
 
-function _Header(props: { height: string }) {
+type HeaderProps = { height: string };
+
+function _Header(props: HeaderProps) {
   return (
     <Stack
       justifyContent={"space-between"}

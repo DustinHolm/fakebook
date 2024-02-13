@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
-import { BodyPage } from "../domain/body/BodyPage";
-import { HomePage, homePageQuery } from "../domain/home/HomePage";
-import { UserPage, userPageQuery } from "../domain/user/UserPage";
+import { BodyPage } from "$domain/body/BodyPage";
+import { HomePage, homePageQuery } from "$domain/home/HomePage";
+import { UserPage, userPageQuery } from "$domain/user/UserPage";
 import { loadQuery } from "react-relay";
 import { relayEnvironment } from "../relayEnvironment";
 

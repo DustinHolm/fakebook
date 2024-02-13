@@ -5,4 +5,4 @@
 
 # Generated
 /server/schema.graphql
-/client/**/*.graphql.ts
+/client/__generated__

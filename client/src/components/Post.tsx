@@ -1,13 +1,15 @@
 import { Avatar, Card, CardContent, Stack, Typography } from "@mui/joy";
 import { ReactNode, memo } from "react";
-import { DateTime } from "../domain/date_time/DateTime";
+import { DateTime } from "$util/DateTime";
 
-function _Post(props: {
+type PostProps = {
   user: { firstName: string; lastName: string };
   createdOn: Date;
   message: string;
   children?: ReactNode;
-}) {
+};
+
+function _Post(props: PostProps) {
   return (
     <Card>
       <Stack direction={"row"} justifyContent={"space-between"}>

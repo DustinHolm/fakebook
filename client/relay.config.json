@@ -1,6 +1,7 @@
 {
   "src": "./src",
   "language": "typescript",
+  "artifactDirectory": "./__generated__",
   "schema": "./schema.graphql",
   "customScalarTypes": {
     "DateTime": "string"

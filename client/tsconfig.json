@@ -6,6 +6,14 @@
     "module": "ESNext",
     "skipLibCheck": true,
 
+    "baseUrl": ".",
+    "paths": {
+      "$components/*": ["src/components/*"],
+      "$domain/*": ["src/domain/*"],
+      "$util/*": ["src/util/*"],
+      "$schemas/*": ["__generated__/*"]
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -20,6 +28,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "__generated__"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
