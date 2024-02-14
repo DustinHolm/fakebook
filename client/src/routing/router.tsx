@@ -5,6 +5,7 @@ import { UserPage, userPageQuery } from "$domain/user/UserPage";
 import { loadQuery } from "react-relay";
 import { relayEnvironment } from "../relayEnvironment";
 import { ErrorFallback } from "./ErrorFallback";
+import { useGlobalState } from "$domain/globalState";
 
 export const router = createBrowserRouter([
   {
@@ -14,7 +15,10 @@ export const router = createBrowserRouter([
         path: "/",
         element: <HomePage />,
         loader: async () => {
-          const id = 1;
+          const id = useGlobalState.getState().currentUser.id;
+          if (!id) {
+            throw Error("Not logged in and no way to currently login :(");
+          }
           return loadQuery(relayEnvironment, homePageQuery, { id });
         },
       },
@@ -23,7 +27,9 @@ export const router = createBrowserRouter([
         element: <UserPage />,
         loader: async ({ params }) => {
           const id = params.userId;
-          if (!id) throw Error("Require userId to be defined!");
+          if (!id) {
+            throw Error("Require userId to be defined!");
+          }
           return loadQuery(relayEnvironment, userPageQuery, { id });
         },
       },

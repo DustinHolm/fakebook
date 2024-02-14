@@ -4,5 +4,4 @@
 /client/.swc
 
 # Generated
-/server/schema.graphql
 /client/__generated__
