@@ -12,6 +12,7 @@ base64 = "0.21.7"
 deadpool-postgres = "0.11.0"
 dotenv = "0.15.0"
 hyper = { version = "0.14.27", features = ["full"] }
+postgres-types = { version = "0.2.6", features = ["derive"] }
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 serde = "1.0.188"
 time = "0.3.28"

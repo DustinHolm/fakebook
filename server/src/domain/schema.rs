@@ -1,10 +1,11 @@
-use std::num::ParseIntError;
-
-use async_graphql::{Context, Object, ID};
+use async_graphql::{
+    connection::{Edge, EmptyFields},
+    Context, Object, ID,
+};
 use tracing::instrument;
 
 use crate::{
-    errors::query::QueryError,
+    errors::{mapping::MappingError, query::QueryError},
     infrastructure::db::{Loaders, Saver},
 };
 
@@ -12,6 +13,8 @@ use super::{
     app_user::{AppUser, AppUserInput},
     comment::{Comment, CommentInput},
     post::{Post, PostInput},
+    relay_meta::{AppCursor, CanDecodeId},
+    ValidInput as _,
 };
 
 pub struct RootQuery;
@@ -20,13 +23,12 @@ pub struct RootQuery;
 impl RootQuery {
     #[instrument(skip(self, ctx), err(Debug))]
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<AppUser, QueryError> {
-        let inner_id: i32 = id
-            .try_into()
-            .map_err(|e: ParseIntError| QueryError::invalid_input(e.to_string()))?;
-
         let loaders = ctx
             .data::<Loaders>()
             .map_err(|e| QueryError::internal(e.message))?;
+
+        let inner_id = AppUser::decode(&id)
+            .map_err(|e: MappingError| QueryError::invalid_input(e.to_string()))?;
 
         let user = loaders
             .app_user
@@ -52,16 +54,26 @@ impl RootMutation {
             .data::<Saver>()
             .map_err(|e| QueryError::internal(e.message))?;
 
+        user.validate()?;
+
         Ok(saver.save_user(&user).await?)
     }
 
     #[instrument(skip(self, ctx), err(Debug))]
-    async fn create_post(&self, ctx: &Context<'_>, post: PostInput) -> Result<Post, QueryError> {
+    async fn create_post(
+        &self,
+        ctx: &Context<'_>,
+        post: PostInput,
+    ) -> Result<Edge<AppCursor, Post, EmptyFields>, QueryError> {
         let saver = ctx
             .data::<Saver>()
             .map_err(|e| QueryError::internal(e.message))?;
 
-        Ok(saver.save_post(&post).await?)
+        post.validate()?;
+
+        let saved = saver.save_post(&post).await?;
+
+        Ok(Edge::new(AppCursor(saved.post_id), saved))
     }
 
     #[instrument(skip(self, ctx), err(Debug))]
@@ -69,11 +81,15 @@ impl RootMutation {
         &self,
         ctx: &Context<'_>,
         comment: CommentInput,
-    ) -> Result<Comment, QueryError> {
+    ) -> Result<Edge<AppCursor, Comment, EmptyFields>, QueryError> {
         let saver = ctx
             .data::<Saver>()
             .map_err(|e| QueryError::internal(e.message))?;
 
-        Ok(saver.save_comment(&comment).await?)
+        comment.validate()?;
+
+        let saved = saver.save_comment(&comment).await?;
+
+        Ok(Edge::new(AppCursor(saved.comment_id), saved))
     }
 }

@@ -2,16 +2,16 @@ import { produce } from "immer";
 import { StateCreator, create } from "zustand";
 
 type CurrentUserSlice = {
-  id: number | null;
-  setId: (newId: number) => void;
+  id: string | null;
+  setId: (newId: string) => void;
   unsetId: () => void;
 };
 
 const currentUserSlice: StateCreator<GlobalState, [], [], CurrentUserSlice> = (
   set
 ) => ({
-  id: 1, //placeholder for now
-  setId: (id: number) => {
+  id: "MUFwcFVzZXI=", //placeholder for now
+  setId: (id: string) => {
     set(
       produce((state: GlobalState): void => {
         state.currentUser.id = id;

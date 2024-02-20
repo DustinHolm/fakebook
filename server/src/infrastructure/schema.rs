@@ -3,8 +3,8 @@ use std::fs;
 use async_graphql::EmptySubscription;
 
 use crate::{
+    domain::schema::{RootMutation, RootQuery},
     errors::fatal::FatalError,
-    models::schema::{RootMutation, RootQuery},
 };
 
 use super::db::Saver;

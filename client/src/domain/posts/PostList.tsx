@@ -9,7 +9,7 @@ import { compareDesc } from "date-fns";
 
 const PostList_post = graphql`
   fragment PostList_post on Post @relay(plural: true) {
-    pid
+    id
     createdOn
     content
     author {
@@ -20,11 +20,11 @@ const PostList_post = graphql`
 `;
 
 type PostListProps = {
-  data: PostList_post$key;
+  fragmentKey: PostList_post$key;
 };
 
 function _PostList(props: PostListProps) {
-  const data = useFragment(PostList_post, props.data);
+  const data = useFragment(PostList_post, props.fragmentKey);
   const posts = useMemo(() => {
     const posts = data.map((post) => ({
       ...post,
@@ -38,7 +38,7 @@ function _PostList(props: PostListProps) {
     <Stack gap={2}>
       {posts.map((post) => (
         <Post
-          key={post.pid}
+          key={post.id}
           user={post.author}
           createdOn={post.createdOn}
           message={post.content}

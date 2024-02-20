@@ -1,13 +1,9 @@
 type AppUser {
-	"""
-	Id used by relay. Must be globally unique.
-	"""
 	id: ID!
-	pid: ID!
 	firstName: String!
 	lastName: String!
 	friends: [AppUser!]!
-	posts: [Post!]!
+	posts(after: String, before: String, first: Int, last: Int): PostConnection!
 }
 
 input AppUserInput {
@@ -17,21 +13,42 @@ input AppUserInput {
 
 
 type Comment {
-	"""
-	Id used by relay. Must be globally unique.
-	"""
 	id: ID!
-	pid: ID!
 	referencedPost: Post!
 	author: AppUser!
 	createdOn: DateTime!
 	content: String!
 }
 
+type CommentConnection {
+	"""
+	Information to aid in pagination.
+	"""
+	pageInfo: PageInfo!
+	"""
+	A list of edges.
+	"""
+	edges: [CommentEdge!]!
+}
+
+"""
+An edge in a connection.
+"""
+type CommentEdge {
+	"""
+	The item at the end of the edge
+	"""
+	node: Comment!
+	"""
+	A cursor for use in pagination
+	"""
+	cursor: String!
+}
+
 input CommentInput {
-	author: Int!
+	author: ID!
 	content: String!
-	referencedPost: Int!
+	referencedPost: ID!
 }
 
 """
@@ -47,27 +64,70 @@ scalar DateTime
 
 
 
+"""
+Information about pagination in a connection
+"""
+type PageInfo {
+	"""
+	When paginating backwards, are there more items?
+	"""
+	hasPreviousPage: Boolean!
+	"""
+	When paginating forwards, are there more items?
+	"""
+	hasNextPage: Boolean!
+	"""
+	When paginating backwards, the cursor to continue.
+	"""
+	startCursor: String
+	"""
+	When paginating forwards, the cursor to continue.
+	"""
+	endCursor: String
+}
+
 type Post {
-	"""
-	Id used by relay. Must be globally unique.
-	"""
 	id: ID!
-	pid: ID!
 	author: AppUser!
 	createdOn: DateTime!
 	content: String!
-	comments: [Comment!]!
+	comments(after: String, before: String, first: Int, last: Int): CommentConnection!
+}
+
+type PostConnection {
+	"""
+	Information to aid in pagination.
+	"""
+	pageInfo: PageInfo!
+	"""
+	A list of edges.
+	"""
+	edges: [PostEdge!]!
+}
+
+"""
+An edge in a connection.
+"""
+type PostEdge {
+	"""
+	The item at the end of the edge
+	"""
+	node: Post!
+	"""
+	A cursor for use in pagination
+	"""
+	cursor: String!
 }
 
 input PostInput {
-	author: Int!
+	author: ID!
 	content: String!
 }
 
 type RootMutation {
 	createUser(user: AppUserInput!): AppUser!
-	createPost(post: PostInput!): Post!
-	createComment(comment: CommentInput!): Comment!
+	createPost(post: PostInput!): PostEdge!
+	createComment(comment: CommentInput!): CommentEdge!
 }
 
 type RootQuery {

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
@@ -13,28 +13,43 @@ use crate::{
     infrastructure::db::{Loaders, Saver},
 };
 
-use super::{app_user::AppUser, post::Post};
+use super::{
+    app_user::AppUser,
+    db_id::{DbId, HasDbId},
+    post::Post,
+    relay_meta::CanDecodeId,
+    ValidInput,
+};
+
+const SUFFIX: &str = "Comment";
 
 #[derive(Clone)]
 pub struct Comment {
-    comment_id: i32,
-    referenced_post: i32,
-    author: i32,
+    pub comment_id: DbId,
+    referenced_post: DbId,
+    author: DbId,
     created_on: OffsetDateTime,
     content: String,
 }
 
+impl HasDbId for Comment {
+    fn db_id(&self) -> DbId {
+        self.comment_id
+    }
+}
+
+impl CanDecodeId for Comment {
+    fn decode(relay_id: &ID) -> Result<DbId, MappingError> {
+        Self::decode_with_suffix(relay_id, SUFFIX)
+    }
+}
+
 #[Object]
 impl Comment {
-    /// Id used by relay. Must be globally unique.
-    async fn id(&self) -> ID {
-        let combined = self.comment_id.to_string() + "Comment";
+    pub async fn id(&self) -> ID {
+        let combined = self.comment_id.to_string() + SUFFIX;
 
-        ID(STANDARD.encode(combined))
-    }
-
-    async fn pid(&self) -> ID {
-        ID(self.comment_id.to_string())
+        ID(URL_SAFE.encode(combined))
     }
 
     #[instrument(skip_all, err(Debug))]
@@ -83,12 +98,12 @@ impl CommentsOfPostLoader {
 }
 
 #[async_trait]
-impl Loader<i32> for CommentsOfPostLoader {
+impl Loader<DbId> for CommentsOfPostLoader {
     type Value = Vec<Comment>;
     type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
-    async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
 
         let stmt = db
@@ -112,9 +127,18 @@ impl Loader<i32> for CommentsOfPostLoader {
 
 #[derive(Debug, InputObject)]
 pub struct CommentInput {
-    author: i32,
+    author: ID,
     content: String,
-    referenced_post: i32,
+    referenced_post: ID,
+}
+
+impl ValidInput for CommentInput {
+    fn validate(&self) -> Result<(), QueryError> {
+        AppUser::decode(&self.author).map_err(|e| QueryError::invalid_input(e.to_string()))?;
+        Post::decode(&self.referenced_post)
+            .map_err(|e| QueryError::invalid_input(e.to_string()))?;
+        Ok(())
+    }
 }
 
 impl Saver {
@@ -122,6 +146,8 @@ impl Saver {
     pub async fn save_comment(&self, comment: &CommentInput) -> Result<Comment, DbError> {
         let db = self.pool.get().await?;
 
+        let author = AppUser::decode(&comment.author)?;
+        let referenced_post = Post::decode(&comment.referenced_post)?;
         let now = OffsetDateTime::now_utc();
 
         let stmt = db
@@ -135,15 +161,7 @@ impl Saver {
             .await?;
 
         let row = db
-            .query_one(
-                &stmt,
-                &[
-                    &comment.author,
-                    &now,
-                    &comment.content,
-                    &comment.referenced_post,
-                ],
-            )
+            .query_one(&stmt, &[&author, &now, &comment.content, &referenced_post])
             .await?;
 
         Ok(row.try_into()?)

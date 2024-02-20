@@ -1,35 +1,20 @@
-import { Avatar, Card, CardContent, Stack, Typography } from "@mui/joy";
-import { ReactNode, memo } from "react";
-import { DateTime } from "$util/DateTime";
+import { CardContent, Typography } from "@mui/joy";
+import { memo } from "react";
+import { PostFrame } from "./PostFrame";
 
 type PostProps = {
   user: { firstName: string; lastName: string };
   createdOn: Date;
   message: string;
-  children?: ReactNode;
 };
 
 function _Post(props: PostProps) {
   return (
-    <Card>
-      <Stack direction={"row"} justifyContent={"space-between"}>
-        <Stack direction={"row"} spacing={1} alignItems={"center"}>
-          <Avatar>{props.user.firstName[0] + props.user.lastName[0]}</Avatar>
-
-          <Typography>
-            {props.user.firstName + " " + props.user.lastName}
-          </Typography>
-        </Stack>
-
-        <Typography>{DateTime.format(props.createdOn)}</Typography>
-      </Stack>
-
+    <PostFrame user={props.user} displayDate={props.createdOn}>
       <CardContent>
         <Typography>{props.message}</Typography>
       </CardContent>
-
-      {props.children && <CardContent>{props.children}</CardContent>}
-    </Card>
+    </PostFrame>
   );
 }
 

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use deadpool_postgres::Pool;
 use tokio_postgres::Row;
 use tracing::instrument;
@@ -12,26 +12,40 @@ use crate::{
     infrastructure::db::{Loaders, Saver},
 };
 
-use super::post::Post;
+use super::{
+    db_id::{DbId, HasDbId},
+    post::Post,
+    relay_meta::{paginate, AppConnection, CanDecodeId},
+    ValidInput,
+};
+
+const SUFFIX: &str = "AppUser";
 
 #[derive(Clone)]
 pub struct AppUser {
-    user_id: i32,
+    user_id: DbId,
     first_name: String,
     last_name: String,
 }
 
+impl HasDbId for AppUser {
+    fn db_id(&self) -> DbId {
+        self.user_id
+    }
+}
+
+impl CanDecodeId for AppUser {
+    fn decode(relay_id: &ID) -> Result<DbId, MappingError> {
+        Self::decode_with_suffix(relay_id, SUFFIX)
+    }
+}
+
 #[Object]
 impl AppUser {
-    /// Id used by relay. Must be globally unique.
     pub async fn id(&self) -> ID {
-        let combined = self.user_id.to_string() + "AppUser";
+        let combined = self.user_id.to_string() + SUFFIX;
 
-        ID(STANDARD.encode(combined))
-    }
-
-    pub async fn pid(&self) -> ID {
-        ID(self.user_id.to_string())
+        ID(URL_SAFE.encode(combined))
     }
 
     pub async fn first_name(&self) -> &str {
@@ -65,7 +79,14 @@ impl AppUser {
     }
 
     #[instrument(skip_all, err(Debug))]
-    pub async fn posts(&self, ctx: &Context<'_>) -> Result<Vec<Post>, QueryError> {
+    pub async fn posts(
+        &self,
+        ctx: &Context<'_>,
+        after: Option<String>,
+        before: Option<String>,
+        first: Option<i32>,
+        last: Option<i32>,
+    ) -> Result<AppConnection<Post>, QueryError> {
         let loaders = ctx
             .data::<Loaders>()
             .map_err(|e| QueryError::internal(e.message))?;
@@ -76,7 +97,11 @@ impl AppUser {
             .await?
             .ok_or_else(QueryError::not_found)?;
 
-        Ok(posts)
+        let connection = paginate(after, before, first, last, posts)
+            .await
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        Ok(connection)
     }
 }
 
@@ -91,12 +116,12 @@ impl AppUserLoader {
 }
 
 #[async_trait]
-impl Loader<i32> for AppUserLoader {
+impl Loader<DbId> for AppUserLoader {
     type Value = AppUser;
     type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
-    async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
 
         let stmt = db
@@ -125,12 +150,12 @@ impl FriendIdLoader {
 }
 
 #[async_trait]
-impl Loader<i32> for FriendIdLoader {
-    type Value = Vec<i32>;
+impl Loader<DbId> for FriendIdLoader {
+    type Value = Vec<DbId>;
     type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
-    async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
 
         let stmt = db
@@ -157,12 +182,12 @@ impl Loader<i32> for FriendIdLoader {
                     row.try_get(1).map_err(MappingError::db)?,
                 ))
             })
-            .collect::<Result<Vec<(i32, i32)>, DbError>>()?;
+            .collect::<Result<Vec<(DbId, DbId)>, DbError>>()?;
 
         let result_map = ids
             .iter()
             .map(|id| {
-                let friends: Vec<i32> = relations
+                let friends: Vec<DbId> = relations
                     .iter()
                     .filter_map(|rel| {
                         if &rel.0 == id {
@@ -187,6 +212,12 @@ impl Loader<i32> for FriendIdLoader {
 pub struct AppUserInput {
     pub first_name: String,
     pub last_name: String,
+}
+
+impl ValidInput for AppUserInput {
+    fn validate(&self) -> Result<(), QueryError> {
+        Ok(())
+    }
 }
 
 impl Saver {

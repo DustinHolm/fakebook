@@ -8,12 +8,12 @@ use tokio_postgres::NoTls;
 use tracing::instrument;
 
 use crate::{
-    errors::fatal::FatalError,
-    models::{
+    domain::{
         app_user::{AppUserLoader, FriendIdLoader},
         comment::CommentsOfPostLoader,
         post::{PostLoader, PostsOfAuthorLoader},
     },
+    errors::fatal::FatalError,
 };
 
 embed_migrations!();

@@ -1,4 +1,4 @@
-import { Suspense, memo } from "react";
+import { Suspense, memo, useMemo } from "react";
 import { graphql } from "relay-runtime";
 import { UserPageQuery } from "$schemas/UserPageQuery.graphql";
 import { usePreloadedRoute } from "$util/usePreloadRoute";
@@ -7,8 +7,12 @@ import { PostList } from "$domain/posts/PostList";
 export const userPageQuery = graphql`
   query UserPageQuery($id: ID!) {
     user(id: $id) {
-      posts {
-        ...PostList_post
+      posts(first: 100) {
+        edges {
+          node {
+            ...PostList_post
+          }
+        }
       }
     }
   }
@@ -17,7 +21,12 @@ export const userPageQuery = graphql`
 function _UserPage() {
   const { user } = usePreloadedRoute<UserPageQuery>(userPageQuery);
 
-  return <PostList data={user.posts} />;
+  const posts = useMemo(
+    () => user.posts.edges.map((edge) => edge.node),
+    [user]
+  );
+
+  return <PostList fragmentKey={posts} />;
 }
 
 function _UserPageWithSuspense() {

@@ -1,6 +1,6 @@
+mod domain;
 mod errors;
 mod infrastructure;
-mod models;
 
 use std::net::SocketAddr;
 

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use async_graphql::{dataloader::Loader, Context, InputObject, Object, ID};
 use axum::async_trait;
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
@@ -13,27 +13,42 @@ use crate::{
     infrastructure::db::{Loaders, Saver},
 };
 
-use super::{app_user::AppUser, comment::Comment};
+use super::{
+    app_user::AppUser,
+    comment::Comment,
+    db_id::{DbId, HasDbId},
+    relay_meta::{paginate, AppConnection, CanDecodeId},
+    ValidInput,
+};
+
+const SUFFIX: &str = "Post";
 
 #[derive(Clone)]
 pub struct Post {
-    post_id: i32,
-    author: i32,
+    pub post_id: DbId,
+    author: DbId,
     created_on: OffsetDateTime,
     content: String,
 }
 
+impl HasDbId for Post {
+    fn db_id(&self) -> DbId {
+        self.post_id
+    }
+}
+
+impl CanDecodeId for Post {
+    fn decode(relay_id: &ID) -> Result<DbId, MappingError> {
+        Self::decode_with_suffix(relay_id, SUFFIX)
+    }
+}
+
 #[Object]
 impl Post {
-    /// Id used by relay. Must be globally unique.
-    async fn id(&self) -> ID {
-        let combined = self.post_id.to_string() + "Post";
+    pub async fn id(&self) -> ID {
+        let combined = self.post_id.to_string() + SUFFIX;
 
-        ID(STANDARD.encode(combined))
-    }
-
-    async fn pid(&self) -> ID {
-        ID(self.post_id.to_string())
+        ID(URL_SAFE.encode(combined))
     }
 
     #[instrument(skip_all, err(Debug))]
@@ -58,16 +73,29 @@ impl Post {
     }
 
     #[instrument(skip_all, err(Debug))]
-    async fn comments(&self, ctx: &Context<'_>) -> Result<Vec<Comment>, QueryError> {
+    async fn comments(
+        &self,
+        ctx: &Context<'_>,
+        after: Option<String>,
+        before: Option<String>,
+        first: Option<i32>,
+        last: Option<i32>,
+    ) -> Result<AppConnection<Comment>, QueryError> {
         let loaders = ctx
             .data::<Loaders>()
             .map_err(|e| QueryError::internal(e.message))?;
 
-        loaders
+        let comments = loaders
             .comments_of_post
             .load_one(self.post_id)
             .await?
-            .ok_or(QueryError::not_found())
+            .ok_or(QueryError::not_found())?;
+
+        let connection = paginate(after, before, first, last, comments)
+            .await
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        Ok(connection)
     }
 }
 
@@ -82,12 +110,12 @@ impl PostLoader {
 }
 
 #[async_trait]
-impl Loader<i32> for PostLoader {
+impl Loader<DbId> for PostLoader {
     type Value = Post;
     type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
-    async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
         let stmt = db
             .prepare_cached("SELECT * FROM post WHERE post_id = ANY($1)")
@@ -115,12 +143,12 @@ impl PostsOfAuthorLoader {
 }
 
 #[async_trait]
-impl Loader<i32> for PostsOfAuthorLoader {
+impl Loader<DbId> for PostsOfAuthorLoader {
     type Value = Vec<Post>;
     type Error = DbError;
 
     #[instrument(skip(self), err(Debug))]
-    async fn load(&self, ids: &[i32]) -> Result<HashMap<i32, Self::Value>, Self::Error> {
+    async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
         let db = self.pool.get().await.map_err(DbError::connection)?;
 
         let stmt = db
@@ -144,8 +172,15 @@ impl Loader<i32> for PostsOfAuthorLoader {
 
 #[derive(Debug, InputObject)]
 pub struct PostInput {
-    author: i32,
+    author: ID,
     content: String,
+}
+
+impl ValidInput for PostInput {
+    fn validate(&self) -> Result<(), QueryError> {
+        AppUser::decode(&self.author)?;
+        Ok(())
+    }
 }
 
 impl Saver {
@@ -153,6 +188,7 @@ impl Saver {
     pub async fn save_post(&self, post: &PostInput) -> Result<Post, DbError> {
         let db = self.pool.get().await?;
 
+        let author = AppUser::decode(&post.author)?;
         let now = OffsetDateTime::now_utc();
 
         let stmt = db
@@ -165,9 +201,7 @@ impl Saver {
             )
             .await?;
 
-        let row = db
-            .query_one(&stmt, &[&post.author, &now, &post.content])
-            .await?;
+        let row = db.query_one(&stmt, &[&author, &now, &post.content]).await?;
 
         Ok(row.try_into()?)
     }
