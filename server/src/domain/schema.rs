@@ -13,7 +13,7 @@ use super::{
     app_user::{AppUser, AppUserInput},
     comment::{Comment, CommentInput},
     post::{Post, PostInput},
-    relay_meta::{AppCursor, CanDecodeId},
+    relay_meta::{AppCursor, CanDecodeId, Node},
     ValidInput as _,
 };
 
@@ -21,6 +21,47 @@ pub struct RootQuery;
 
 #[Object]
 impl RootQuery {
+    #[instrument(skip(self, ctx), err(Debug))]
+    async fn node(&self, ctx: &Context<'_>, id: ID) -> Result<Node, QueryError> {
+        let loaders = ctx
+            .data::<Loaders>()
+            .map_err(|e| QueryError::internal(e.message))?;
+
+        if let Ok(inner_id) = AppUser::decode(&id) {
+            let user = loaders
+                .app_user
+                .load_one(inner_id)
+                .await?
+                .ok_or_else(QueryError::not_found)?;
+
+            return Ok(Node::AppUser(user));
+        }
+
+        if let Ok(inner_id) = Comment::decode(&id) {
+            let comment = loaders
+                .comment
+                .load_one(inner_id)
+                .await?
+                .ok_or_else(QueryError::not_found)?;
+
+            return Ok(Node::Comment(comment));
+        }
+
+        if let Ok(inner_id) = Post::decode(&id) {
+            let post = loaders
+                .post
+                .load_one(inner_id)
+                .await?
+                .ok_or_else(QueryError::not_found)?;
+
+            return Ok(Node::Post(post));
+        }
+
+        Err(QueryError::invalid_input(
+            "Given id did not match any available types".into(),
+        ))
+    }
+
     #[instrument(skip(self, ctx), err(Debug))]
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<AppUser, QueryError> {
         let loaders = ctx

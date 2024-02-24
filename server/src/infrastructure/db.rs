@@ -10,7 +10,7 @@ use tracing::instrument;
 use crate::{
     domain::{
         app_user::{AppUserLoader, FriendIdLoader},
-        comment::CommentsOfPostLoader,
+        comment::{CommentLoader, CommentsOfPostLoader},
         post::{PostLoader, PostsOfAuthorLoader},
     },
     errors::fatal::FatalError,
@@ -47,6 +47,7 @@ pub struct Loaders {
     pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
     pub post: DataLoader<PostLoader, HashMapCache>,
     pub posts_of_author: DataLoader<PostsOfAuthorLoader, HashMapCache>,
+    pub comment: DataLoader<CommentLoader, HashMapCache>,
     pub comments_of_post: DataLoader<CommentsOfPostLoader, HashMapCache>,
 }
 
@@ -70,6 +71,11 @@ impl Loaders {
             ),
             posts_of_author: DataLoader::with_cache(
                 PostsOfAuthorLoader::new(pool.clone()),
+                spawn,
+                HashMapCache::default(),
+            ),
+            comment: DataLoader::with_cache(
+                CommentLoader::new(pool.clone()),
                 spawn,
                 HashMapCache::default(),
             ),

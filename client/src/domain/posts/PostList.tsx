@@ -35,7 +35,7 @@ function _PostList(props: PostListProps) {
   }, [data]);
 
   return (
-    <Stack gap={2}>
+    <Stack spacing={2}>
       {posts.map((post) => (
         <Post
           key={post.id}

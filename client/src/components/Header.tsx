@@ -1,23 +1,17 @@
-import { Box, Stack } from "@mui/joy";
+import { Stack, Typography } from "@mui/joy";
 import { memo } from "react";
 
-type HeaderProps = { height: string };
-
-function _Header(props: HeaderProps) {
+function _Header() {
   return (
     <Stack
       justifyContent={"space-between"}
+      alignItems={"center"}
       direction={"row"}
-      sx={{
-        height: props.height,
-        position: "fixed",
-        top: 0,
-        width: "100%",
-        boxSizing: "border-box",
-      }}
+      sx={{ minHeight: "64px", padding: 1, backgroundColor: "primary.solidBg" }}
     >
-      <Box>Left</Box>
-      <Box>Right</Box>
+      <Typography textColor={"common.white"} level="h1">
+        Fakebook
+      </Typography>
     </Stack>
   );
 }

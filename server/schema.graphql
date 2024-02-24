@@ -1,4 +1,4 @@
-type AppUser {
+type AppUser implements Node {
 	id: ID!
 	firstName: String!
 	lastName: String!
@@ -12,7 +12,7 @@ input AppUserInput {
 }
 
 
-type Comment {
+type Comment implements Node {
 	id: ID!
 	referencedPost: Post!
 	author: AppUser!
@@ -64,6 +64,10 @@ scalar DateTime
 
 
 
+interface Node {
+	id: ID!
+}
+
 """
 Information about pagination in a connection
 """
@@ -86,7 +90,7 @@ type PageInfo {
 	endCursor: String
 }
 
-type Post {
+type Post implements Node {
 	id: ID!
 	author: AppUser!
 	createdOn: DateTime!
@@ -131,6 +135,7 @@ type RootMutation {
 }
 
 type RootQuery {
+	node(id: ID!): Node!
 	user(id: ID!): AppUser!
 }
 

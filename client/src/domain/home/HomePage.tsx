@@ -3,7 +3,7 @@ import { graphql } from "relay-runtime";
 import { usePreloadedRoute } from "$util/usePreloadRoute";
 import { HomePageQuery } from "$schemas/HomePageQuery.graphql";
 import { PostList } from "$domain/posts/PostList";
-import { Stack } from "@mui/joy";
+import { Divider, Stack } from "@mui/joy";
 import { PostInput } from "$domain/posts/PostInput";
 
 export const homePageQuery = graphql`
@@ -42,7 +42,7 @@ function _HomePage() {
   );
 
   return (
-    <Stack>
+    <Stack divider={<Divider />} spacing={4}>
       <PostInput fragmentKey={user} />
       <PostList fragmentKey={posts} />
     </Stack>

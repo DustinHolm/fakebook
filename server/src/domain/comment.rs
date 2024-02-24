@@ -87,6 +87,40 @@ impl Comment {
     }
 }
 
+pub struct CommentLoader {
+    pool: Pool,
+}
+
+impl CommentLoader {
+    pub fn new(pool: Pool) -> Self {
+        Self { pool }
+    }
+}
+
+#[async_trait]
+impl Loader<DbId> for CommentLoader {
+    type Value = Comment;
+    type Error = DbError;
+
+    #[instrument(skip(self), err(Debug))]
+    async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
+        let db = self.pool.get().await.map_err(DbError::connection)?;
+
+        let stmt = db
+            .prepare_cached("SELECT * FROM comment WHERE comment_id = ANY($1)")
+            .await?;
+
+        let rows = db.query(&stmt, &[&ids]).await?;
+
+        rows.into_iter()
+            .map(|row| {
+                let comment: Comment = row.try_into()?;
+                Ok((comment.comment_id, comment))
+            })
+            .collect()
+    }
+}
+
 pub struct CommentsOfPostLoader {
     pool: Pool,
 }

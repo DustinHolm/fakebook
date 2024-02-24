@@ -5,14 +5,27 @@ use async_graphql::{
         query, Connection, CursorType, DefaultConnectionName, DefaultEdgeName, DisableNodesField,
         Edge, EmptyFields,
     },
-    Error, OutputType, ID,
+    Error, Interface, OutputType, ID,
 };
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use tracing::instrument;
 
 use crate::errors::{mapping::MappingError, query::QueryError};
 
-use super::db_id::{DbId, HasDbId};
+use super::{
+    app_user::AppUser,
+    comment::Comment,
+    db_id::{DbId, HasDbId},
+    post::Post,
+};
+
+#[derive(Interface)]
+#[graphql(field(name = "id", ty = "ID"))]
+pub enum Node {
+    AppUser(AppUser),
+    Comment(Comment),
+    Post(Post),
+}
 
 pub trait CanDecodeId {
     fn decode(relay_id: &ID) -> Result<DbId, MappingError>;
@@ -144,13 +157,13 @@ fn determine_range(
     if let Some(first) = first {
         let offset = first.saturating_sub(1);
         let new_end = end.min(start + offset);
-        if start < new_end {
+        if start <= new_end {
             end = new_end;
         }
     } else if let Some(last) = last {
         let offset = last.saturating_sub(1);
         let new_start = start.max(end.saturating_sub(offset));
-        if end > new_start {
+        if end >= new_start {
             start = new_start;
         }
     }
@@ -186,9 +199,21 @@ mod tests {
     }
 
     #[test]
+    fn determine_range_forward_single() {
+        let (from, to) = determine_range(Some(2), None, Some(1), None, ARRAY.len()).unwrap();
+        assert_eq!([3], ARRAY[from..=to]);
+    }
+
+    #[test]
     fn determine_range_backward() {
         let (from, to) = determine_range(None, Some(2), None, Some(4), ARRAY.len()).unwrap();
         assert_eq!([0, 1], ARRAY[from..=to]);
+    }
+
+    #[test]
+    fn determine_range_backward_single() {
+        let (from, to) = determine_range(None, Some(2), None, Some(1), ARRAY.len()).unwrap();
+        assert_eq!([1], ARRAY[from..=to]);
     }
 
     #[test]
