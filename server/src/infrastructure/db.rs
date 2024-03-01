@@ -7,23 +7,25 @@ use tokio::spawn;
 use tokio_postgres::NoTls;
 use tracing::instrument;
 
-use crate::{
-    domain::{
-        app_user::{AppUserLoader, FriendIdLoader},
-        comment::{CommentLoader, CommentsOfPostLoader},
-        post::{PostLoader, PostsOfAuthorLoader},
-    },
-    errors::fatal::FatalError,
+use crate::domain::{
+    app_user::{AppUserLoader, FriendIdLoader},
+    comment::{CommentLoader, CommentsOfPostLoader},
+    post::{PostLoader, PostsOfAuthorLoader},
 };
+
+use super::errors::InfrastructureError;
 
 embed_migrations!();
 
-#[instrument(skip_all, err(Debug))]
-pub fn create_pool() -> Result<Pool, FatalError> {
+#[instrument(skip_all, err)]
+pub fn create_pool() -> Result<Pool, InfrastructureError> {
     let mut config = Config::new();
     let port = dotenv::var("PG_PORT")?;
     config.host = Some(dotenv::var("PG_HOST")?);
-    config.port = Some(port.parse()?);
+    config.port = Some(
+        port.parse()
+            .map_err(|_| InfrastructureError::env_invalid(format!("Invalid port: {port}")))?,
+    );
     config.dbname = Some(dotenv::var("PG_DBNAME")?);
     config.user = Some(dotenv::var("PG_USER")?);
     config.password = Some(dotenv::var("PG_PASSWORD")?);
@@ -33,8 +35,8 @@ pub fn create_pool() -> Result<Pool, FatalError> {
     Ok(pool)
 }
 
-#[instrument(skip_all, err(Debug))]
-pub async fn migrate(pool: &Pool) -> Result<(), FatalError> {
+#[instrument(skip_all, err)]
+pub async fn migrate(pool: &Pool) -> Result<(), InfrastructureError> {
     let mut db = pool.get().await?;
     migrations::runner()
         .run_async(db.deref_mut().deref_mut())

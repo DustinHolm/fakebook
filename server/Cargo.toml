@@ -15,6 +15,7 @@ hyper = { version = "0.14.27", features = ["full"] }
 postgres-types = { version = "0.2.6", features = ["derive"] }
 refinery = { version = "0.8.11", features = ["tokio-postgres"] }
 serde = "1.0.188"
+thiserror = "1.0.57"
 time = "0.3.28"
 tokio = { version = "1.32.0", features = ["full"] }
 tokio-postgres = { version = "0.7.10", features = ["with-time-0_3"] }

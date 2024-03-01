@@ -1,12 +1,16 @@
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.2/index.js";
 import http from "k6/http";
 import exec from "k6/execution";
+import encoding from "k6/encoding";
 import { check } from "k6";
 import { healthUrl } from "./urls.js";
 import {
+  AddFriend,
+  CreateUser,
   User,
   UserFriends,
   UserFriendsPosts,
+  UserFriendsPostsComments,
   UserThriceNestedFriends,
 } from "./requests.js";
 
@@ -35,34 +39,71 @@ export const options = {
     normal_requests_spike: {
       executor: "constant-vus",
       vus: 1000,
-      duration: "30s",
+      duration: "20s",
       startTime: "10s",
       exec: "normal",
+    },
+    mutations: {
+      executor: "shared-iterations",
+      vus: 10,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "30s",
+      exec: "mutation",
     },
     mean_requests: {
       executor: "shared-iterations",
       vus: 10,
-      iterations: 10000,
-      maxDuration: "30s",
+      iterations: 5000,
+      maxDuration: "15s",
       startTime: "40s",
       exec: "mean",
     },
   },
 };
 
-const maxUserId = 10000;
+const maxUserIdQuery = 5000;
+const maxUserIdMutation = 10000;
 
 export const smoke = () => {
   const res = http.get(healthUrl);
   check(res, { "response did not contain error": (r) => r.status == 200 });
 };
 
-const normalRequests = [User, UserFriends, UserFriendsPosts];
+const normalRequests = [
+  User,
+  UserFriends,
+  UserFriendsPosts,
+  UserFriendsPostsComments,
+];
 export const normal = () => {
   const i = exec.scenario.iterationInInstance % normalRequests.length;
-  const id = (exec.scenario.iterationInInstance % maxUserId) + 1;
+  let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
+  id = encoding.b64encode(id + "AppUser", "url");
 
   const res = normalRequests[i](id);
+
+  check(res, {
+    "response did not contain error": (r) =>
+      r.status == 200 && !!r.json() && !r.json().errors,
+  });
+};
+
+const mutationRequests = [CreateUser, AddFriend];
+export const mutation = () => {
+  const i = exec.scenario.iterationInInstance % mutationRequests.length;
+  let id1 =
+    (exec.scenario.iterationInInstance % maxUserIdMutation) +
+    maxUserIdQuery +
+    1;
+  let id2 =
+    ((exec.scenario.iterationInInstance + 1) % maxUserIdMutation) +
+    maxUserIdQuery +
+    1;
+  id1 = encoding.b64encode(id1 + "AppUser", "url");
+  id2 = encoding.b64encode(id2 + "AppUser", "url");
+
+  const res = mutationRequests[i](id1, id2);
 
   check(res, {
     "response did not contain error": (r) =>
@@ -73,7 +114,8 @@ export const normal = () => {
 const meanRequests = [UserThriceNestedFriends];
 export const mean = () => {
   const i = exec.scenario.iterationInInstance % meanRequests.length;
-  const id = (exec.scenario.iterationInInstance % maxUserId) + 1;
+  let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
+  id = encoding.b64encode(id + "AppUser", "url");
 
   const res = meanRequests[i](id);
 

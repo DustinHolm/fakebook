@@ -54,7 +54,46 @@ export const UserFriendsPosts = (id) =>
                     firstName
                     lastName
                     posts {
-                      content
+                      edges {
+                        node {
+                          content
+                        }
+                      }
+                    }
+                  }
+                }
+              }`,
+      variables: {
+        id: id,
+      },
+    })
+  );
+
+export const UserFriendsPostsComments = (id) =>
+  http.post(
+    graphqlUrl,
+    JSON.stringify({
+      query: `query UserFriendsPostsComments($id: ID!) {
+                user(id: $id) {
+                  id
+                  firstName
+                  lastName
+                  friends {
+                    id
+                    firstName
+                    lastName
+                    posts {
+                      edges {
+                        node {
+                          comments {
+                            edges {
+                              node {
+                                content
+                              }
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -98,6 +137,38 @@ export const UserThriceNestedFriends = (id) =>
               }`,
       variables: {
         id: id,
+      },
+    })
+  );
+
+export const CreateUser = (first, last) =>
+  http.post(
+    graphqlUrl,
+    JSON.stringify({
+      query: `mutation CreateUser($first: String!, $last: String!) {
+                createUser(input: { firstName: $first, lastName: $last }) {
+                  id
+                }
+              }`,
+      variables: {
+        first: first,
+        last: last,
+      },
+    })
+  );
+
+export const AddFriend = (user, friend) =>
+  http.post(
+    graphqlUrl,
+    JSON.stringify({
+      query: `mutation CreateUser($user: ID!, $friend: ID!) {
+                addFriend(input: { user: $user, friend: $friend }) {
+                  id
+                }
+              }`,
+      variables: {
+        user: user,
+        friend: friend,
       },
     })
   );

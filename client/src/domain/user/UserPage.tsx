@@ -1,9 +1,6 @@
 import { Suspense, memo, useMemo } from "react";
 import { graphql } from "relay-runtime";
-import {
-  UserPageQuery,
-  UserPageQuery$data,
-} from "$schemas/UserPageQuery.graphql";
+import { UserPageQuery } from "$schemas/UserPageQuery.graphql";
 import { usePreloadedRoute } from "$util/usePreloadRoute";
 import { PostList } from "$domain/posts/PostList";
 import { usePaginationFragment } from "react-relay";

@@ -1,4 +1,4 @@
-use std::str::from_utf8;
+use std::fmt::Display;
 
 use async_graphql::{
     connection::{
@@ -9,8 +9,6 @@ use async_graphql::{
 };
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use tracing::instrument;
-
-use crate::errors::{mapping::MappingError, query::QueryError};
 
 use super::{
     app_user::AppUser,
@@ -27,33 +25,29 @@ pub enum Node {
     Post(Post),
 }
 
-pub trait CanDecodeId {
-    fn decode(relay_id: &ID) -> Result<DbId, MappingError>;
-
-    fn decode_with_suffix(ID(relay_id): &ID, suffix: &str) -> Result<DbId, MappingError> {
-        let unencoded = URL_SAFE.decode(relay_id)?;
-        let as_string = from_utf8(&unencoded)?;
-        let trimmed = as_string.trim_end_matches(suffix);
-        let parsed: i32 = trimmed.parse()?;
-
-        Ok(DbId::from(parsed))
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub struct AppCursor(pub DbId);
 
+#[derive(Debug)]
+pub struct AppCursorError(String);
+
+impl Display for AppCursorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 impl CursorType for AppCursor {
-    type Error = QueryError;
+    type Error = AppCursorError;
 
     fn decode_cursor(s: &str) -> Result<Self, Self::Error> {
         let bytes = URL_SAFE
             .decode(s)
-            .map_err(|_| QueryError::invalid_input("Could not decode cursor".to_string()))?;
+            .map_err(|_| AppCursorError("Could not decode cursor".to_string()))?;
 
         let slice: [u8; 4] = bytes
             .try_into()
-            .map_err(|_| QueryError::invalid_input("Cursor had unexpected content".to_string()))?;
+            .map_err(|_| AppCursorError("Cursor had unexpected content".to_string()))?;
 
         let as_i32 = i32::from_le_bytes(slice);
 
@@ -93,13 +87,11 @@ pub async fn paginate<T: OutputType + HasDbId>(
         |after, before, first, last| async move {
             let results_len = results.len();
 
-            let after = after
-                .map(|a: AppCursor| results.iter().position(|x| x.db_id() == a.0))
-                .flatten();
+            let after =
+                after.and_then(|a: AppCursor| results.iter().position(|x| x.db_id() == a.0));
 
-            let before = before
-                .map(|b: AppCursor| results.iter().position(|x| x.db_id() == b.0))
-                .flatten();
+            let before =
+                before.and_then(|b: AppCursor| results.iter().position(|x| x.db_id() == b.0));
 
             let (start, end) = match determine_range(after, before, first, last, results_len) {
                 Some(val) => val,
@@ -144,7 +136,7 @@ fn determine_range(
     }
 
     if let Some(before) = before {
-        if before <= 0 {
+        if before == 0 {
             return None;
         }
         end = before.saturating_sub(1);
@@ -181,7 +173,7 @@ mod tests {
 
     #[test]
     fn encode() {
-        for x in vec![i32::MIN, -1, 0, 1, i32::MAX] {
+        for x in [i32::MIN, -1, 0, 1, i32::MAX] {
             let cursor = AppCursor(DbId::from(x));
             assert_eq!(
                 cursor,

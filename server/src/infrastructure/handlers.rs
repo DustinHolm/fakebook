@@ -7,9 +7,7 @@ use axum::{
 use deadpool_postgres::Pool;
 use tracing::instrument;
 
-use crate::errors::fatal::FatalError;
-
-use super::{db::Loaders, schema::Schema};
+use super::{db::Loaders, errors::InfrastructureError, schema::Schema};
 
 pub async fn graphql_handler(
     schema: Extension<Schema>,
@@ -25,9 +23,12 @@ pub async fn graphiql() -> impl IntoResponse {
     Html(GraphiQLSource::build().endpoint("/graphql").finish())
 }
 
-#[instrument(skip_all, err(Debug))]
-pub async fn health_check(pool: Extension<Pool>, _: Extension<Schema>) -> Result<(), FatalError> {
-    let _ = pool.get().await?;
+#[instrument(skip_all, err)]
+pub async fn health_check(
+    pool: Extension<Pool>,
+    _: Extension<Schema>,
+) -> Result<(), InfrastructureError> {
+    let _ = pool.get().await.map_err(InfrastructureError::health)?;
 
     Ok(())
 }

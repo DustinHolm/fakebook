@@ -1,5 +1,4 @@
 mod domain;
-mod errors;
 mod infrastructure;
 
 use std::net::SocketAddr;
