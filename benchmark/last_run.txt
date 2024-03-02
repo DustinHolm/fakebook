@@ -10,4 +10,3 @@
       http_req_tls_handshaking...: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s      
       http_req_waiting...........: avg=174.1ms  min=186.36µs med=103.34ms max=622.82ms p(90)=492.12ms p(95)=552.92ms
       http_reqs..................: 129555  1366.048186/s
-      vus_max....................: 1200    min=1200      max=1200

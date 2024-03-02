@@ -207,7 +207,7 @@ export const handleSummary = (data) => {
   for (const key in data.metrics) {
     if (key.startsWith("data")) delete data.metrics[key];
     if (key.startsWith("iteration")) delete data.metrics[key];
-    if (key === "vus") delete data.metrics[key];
+    if (key.startsWith("vus")) delete data.metrics[key];
   }
 
   return {
