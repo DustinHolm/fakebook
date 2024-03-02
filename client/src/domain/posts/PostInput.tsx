@@ -13,7 +13,7 @@ const PostInputMutation = graphql`
     $content: String!
     $connections: [ID!]!
   ) {
-    createPost(post: { author: $userId, content: $content })
+    createPost(input: { author: $userId, content: $content })
       @prependEdge(connections: $connections) {
       node {
         ...PostList_post

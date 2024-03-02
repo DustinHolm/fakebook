@@ -1,3 +1,8 @@
+input AddFriendInput {
+  user: ID!
+  friend: ID!
+}
+
 type AppUser implements Node {
   id: ID!
   firstName: String!
@@ -130,9 +135,10 @@ input PostInput {
 }
 
 type RootMutation {
-  createUser(user: AppUserInput!): AppUser!
-  createPost(post: PostInput!): PostEdge!
-  createComment(comment: CommentInput!): CommentEdge!
+  createUser(input: AppUserInput!): AppUser!
+  addFriend(input: AddFriendInput!): AppUser!
+  createPost(input: PostInput!): PostEdge!
+  createComment(input: CommentInput!): CommentEdge!
 }
 
 type RootQuery {

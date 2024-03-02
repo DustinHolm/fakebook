@@ -36,28 +36,52 @@ export const options = {
       startTime: "2s",
       exec: "normal",
     },
-    normal_requests_spike: {
-      executor: "constant-vus",
-      vus: 1000,
-      duration: "20s",
-      startTime: "10s",
-      exec: "normal",
-    },
     mutations: {
       executor: "shared-iterations",
       vus: 10,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "30s",
+      startTime: "10s",
       exec: "mutation",
+    },
+    normal_requests_spike: {
+      executor: "constant-vus",
+      vus: 1000,
+      duration: "20s",
+      startTime: "20s",
+      exec: "normal",
     },
     mean_requests: {
       executor: "shared-iterations",
-      vus: 10,
-      iterations: 5000,
-      maxDuration: "15s",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "20s",
       startTime: "40s",
       exec: "mean",
+    },
+    user: {
+      executor: "shared-iterations",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "60s",
+      exec: "user",
+    },
+    user_and_friends_posts: {
+      executor: "shared-iterations",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "70s",
+      exec: "userFriendsPosts",
+    },
+    user_and_friends_posts_with_comments: {
+      executor: "shared-iterations",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "80s",
+      exec: "userFriendsPostsComments",
     },
   },
 };
@@ -68,6 +92,39 @@ const maxUserIdMutation = 10000;
 export const smoke = () => {
   const res = http.get(healthUrl);
   check(res, { "response did not contain error": (r) => r.status == 200 });
+};
+
+export const user = () => {
+  let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
+  id = encoding.b64encode(id + "AppUser", "url");
+  const res = User(id);
+
+  check(res, {
+    "response did not contain error": (r) =>
+      r.status == 200 && !!r.json() && !r.json().errors,
+  });
+};
+
+export const userFriendsPosts = () => {
+  let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
+  id = encoding.b64encode(id + "AppUser", "url");
+  const res = UserFriendsPosts(id);
+
+  check(res, {
+    "response did not contain error": (r) =>
+      r.status == 200 && !!r.json() && !r.json().errors,
+  });
+};
+
+export const userFriendsPostsComments = () => {
+  let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
+  id = encoding.b64encode(id + "AppUser", "url");
+  const res = UserFriendsPostsComments(id);
+
+  check(res, {
+    "response did not contain error": (r) =>
+      r.status == 200 && !!r.json() && !r.json().errors,
+  });
 };
 
 const normalRequests = [
