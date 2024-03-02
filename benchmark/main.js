@@ -67,12 +67,20 @@ export const options = {
       startTime: "60s",
       exec: "user",
     },
-    user_and_friends_posts: {
+    user_and_friends: {
       executor: "shared-iterations",
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
       startTime: "70s",
+      exec: "userFriends",
+    },
+    user_and_friends_posts: {
+      executor: "shared-iterations",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "80s",
       exec: "userFriendsPosts",
     },
     user_and_friends_posts_with_comments: {
@@ -80,7 +88,7 @@ export const options = {
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "80s",
+      startTime: "90s",
       exec: "userFriendsPostsComments",
     },
   },
@@ -98,6 +106,17 @@ export const user = () => {
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
   id = encoding.b64encode(id + "AppUser", "url");
   const res = User(id);
+
+  check(res, {
+    "response did not contain error": (r) =>
+      r.status == 200 && !!r.json() && !r.json().errors,
+  });
+};
+
+export const userFriends = () => {
+  let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
+  id = encoding.b64encode(id + "AppUser", "url");
+  const res = UserFriends(id);
 
   check(res, {
     "response did not contain error": (r) =>
@@ -183,6 +202,14 @@ export const mean = () => {
 };
 
 export const handleSummary = (data) => {
+  delete data.metrics["http_req_duration{expected_response:true}"];
+
+  for (const key in data.metrics) {
+    if (key.startsWith("data")) delete data.metrics[key];
+    if (key.startsWith("iteration")) delete data.metrics[key];
+    if (key === "vus") delete data.metrics[key];
+  }
+
   return {
     stdout: textSummary(data),
     "./last_run.txt": textSummary(data, { indent: "  ", enableColors: false }),
