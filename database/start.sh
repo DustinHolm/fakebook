@@ -4,6 +4,8 @@ docker images | grep fakebook-db > /dev/null || $(dirname -- "$0")/build.sh
 docker ps | grep fakebook-db > /dev/null && docker stop fakebook-db
 docker ps -a | grep fakebook-db > /dev/null && docker rm fakebook-db
 
+# --cap-add NET_ADMIN
+
 (
     trap "kill 0" SIGINT
     docker run \

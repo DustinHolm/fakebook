@@ -32,7 +32,7 @@ impl Post {
             .load_one(self.author)
             .await
             .map_err(|_| GqlError::DbLoad)?
-            .ok_or_else(|| GqlError::InvalidState("Expected empty vec, got None".to_string()))
+            .ok_or_else(|| GqlError::InvalidState("Expected author, got None".to_string()))
     }
 
     async fn created_on(&self) -> OffsetDateTime {

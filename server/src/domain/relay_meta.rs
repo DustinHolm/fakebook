@@ -125,6 +125,10 @@ fn determine_range(
     last: Option<usize>,
     results_len: usize,
 ) -> Option<(usize, usize)> {
+    if results_len == 0 {
+        return None;
+    }
+
     let mut start: usize = 0;
     let mut end: usize = results_len.saturating_sub(1);
 
@@ -268,6 +272,13 @@ mod tests {
     fn determine_range_empty_input() {
         let array: [i32; 0] = [];
         let result = determine_range(Some(0), None, Some(3), None, array.len());
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn determine_range_empty_input_no_limit() {
+        let array: [i32; 0] = [];
+        let result = determine_range(None, None, None, None, array.len());
         assert!(result.is_none());
     }
 }

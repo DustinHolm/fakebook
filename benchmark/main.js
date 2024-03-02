@@ -28,14 +28,6 @@ export const options = {
       startTime: "1s",
       exec: "smoke",
     },
-    normal_requests: {
-      executor: "shared-iterations",
-      vus: 10,
-      iterations: 10000,
-      maxDuration: "10s",
-      startTime: "2s",
-      exec: "normal",
-    },
     mutations: {
       executor: "shared-iterations",
       vus: 10,
@@ -44,17 +36,17 @@ export const options = {
       startTime: "10s",
       exec: "mutation",
     },
-    normal_requests_spike: {
+    mixed_requests_spike: {
       executor: "constant-vus",
       vus: 1000,
       duration: "20s",
       startTime: "20s",
-      exec: "normal",
+      exec: "mixed",
     },
     mean_requests: {
       executor: "shared-iterations",
-      vus: 100,
-      iterations: 10000,
+      vus: 1,
+      iterations: 10,
       maxDuration: "20s",
       startTime: "40s",
       exec: "mean",
@@ -146,18 +138,18 @@ export const userFriendsPostsComments = () => {
   });
 };
 
-const normalRequests = [
+const mixedRequests = [
   User,
   UserFriends,
   UserFriendsPosts,
   UserFriendsPostsComments,
 ];
-export const normal = () => {
-  const i = exec.scenario.iterationInInstance % normalRequests.length;
+export const mixed = () => {
+  const i = exec.scenario.iterationInInstance % mixedRequests.length;
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
   id = encoding.b64encode(id + "AppUser", "url");
 
-  const res = normalRequests[i](id);
+  const res = mixedRequests[i](id);
 
   check(res, {
     "response did not contain error": (r) =>
