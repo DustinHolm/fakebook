@@ -145,8 +145,13 @@ type RootQuery {
 	user(id: ID!): AppUser!
 }
 
+type RootSubscription {
+	userFeed(userId: ID!): [PostEdge!]!
+}
+
 
 schema {
 	query: RootQuery
 	mutation: RootMutation
+	subscription: RootSubscription
 }

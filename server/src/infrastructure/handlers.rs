@@ -10,22 +10,27 @@ use tracing::instrument;
 use super::{db::Loaders, errors::InfrastructureError, schema::Schema};
 
 pub async fn graphql_handler(
-    schema: Extension<Schema>,
-    pool: Extension<Pool>,
+    Extension(schema): Extension<Schema>,
+    Extension(pool): Extension<Pool>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let req_with_loaders = req.into_inner().data(Loaders::new(pool.0));
+    let req_with_loaders = req.into_inner().data(Loaders::new(pool));
 
     schema.execute(req_with_loaders).await.into()
 }
 
 pub async fn graphiql() -> impl IntoResponse {
-    Html(GraphiQLSource::build().endpoint("/graphql").finish())
+    Html(
+        GraphiQLSource::build()
+            .endpoint("/graphql")
+            .subscription_endpoint("/graphql/ws")
+            .finish(),
+    )
 }
 
 #[instrument(skip_all, err)]
 pub async fn health_check(
-    pool: Extension<Pool>,
+    Extension(pool): Extension<Pool>,
     _: Extension<Schema>,
 ) -> Result<(), InfrastructureError> {
     let _ = pool.get().await.map_err(InfrastructureError::health)?;

@@ -6,4 +6,5 @@ function requireString(x: unknown): string {
 
 export const env = Object.freeze({
   serverUrl: requireString(import.meta.env.VITE_SERVER_URL),
+  serverWsUrl: requireString(import.meta.env.VITE_SERVER_WS_URL),
 });

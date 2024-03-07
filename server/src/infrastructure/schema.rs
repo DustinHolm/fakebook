@@ -1,17 +1,26 @@
 use std::fs;
 
-use async_graphql::{EmptySubscription, SchemaBuilder};
+use async_graphql::SchemaBuilder;
+use deadpool_postgres::Pool;
 
-use crate::domain::schema::{RootMutation, RootQuery};
+use crate::domain::schema::{RootMutation, RootQuery, RootSubscription};
 
-use super::{db::Saver, errors::InfrastructureError};
+use super::{
+    db::{Loaders, Saver},
+    errors::InfrastructureError,
+};
 
-fn schema_builder() -> SchemaBuilder<RootQuery, RootMutation, EmptySubscription> {
-    Schema::build(RootQuery, RootMutation, EmptySubscription)
+fn schema_builder() -> SchemaBuilder<RootQuery, RootMutation, RootSubscription> {
+    Schema::build(RootQuery, RootMutation, RootSubscription)
 }
 
-pub fn new(saver: Saver) -> Schema {
-    schema_builder().data(saver).finish()
+pub fn new(saver: Saver, pool: Pool) -> Schema {
+    schema_builder()
+        // Will get overriden for every request. This is a fallback for subscriptions.
+        .data(Loaders::new(pool.clone()))
+        .data(saver)
+        .data(pool)
+        .finish()
 }
 
 pub fn save_schema(path: &str) -> Result<(), InfrastructureError> {
@@ -20,4 +29,4 @@ pub fn save_schema(path: &str) -> Result<(), InfrastructureError> {
     Ok(())
 }
 
-pub type Schema = async_graphql::Schema<RootQuery, RootMutation, EmptySubscription>;
+pub type Schema = async_graphql::Schema<RootQuery, RootMutation, RootSubscription>;

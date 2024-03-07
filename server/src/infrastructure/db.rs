@@ -88,6 +88,15 @@ impl Loaders {
             ),
         }
     }
+
+    pub fn clear_caches(&self) {
+        self.app_user.clear();
+        self.friend_id.clear();
+        self.post.clear();
+        self.posts_of_author.clear();
+        self.comment.clear();
+        self.comments_of_post.clear();
+    }
 }
 
 pub struct Saver {

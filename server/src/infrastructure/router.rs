@@ -1,3 +1,4 @@
+use async_graphql_axum::GraphQLSubscription;
 use axum::{routing::get, Extension, Router};
 use deadpool_postgres::Pool;
 use std::time::Duration;
@@ -18,7 +19,7 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(CompressionLayer::new())
         .layer(CorsLayer::permissive())
-        .layer(Extension(schema))
+        .layer(Extension(schema.clone()))
         .layer(Extension(pool))
         .into_inner();
 
@@ -29,5 +30,6 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
             "/graphql",
             get(handlers::graphiql).post(handlers::graphql_handler),
         )
+        .route_service("/graphql/ws", GraphQLSubscription::new(schema))
         .layer(middleware)
 }

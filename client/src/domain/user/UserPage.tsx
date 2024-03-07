@@ -1,9 +1,9 @@
 import { Suspense, memo, useMemo } from "react";
-import { graphql } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 import { UserPageQuery } from "$schemas/UserPageQuery.graphql";
 import { usePreloadedRoute } from "$util/usePreloadRoute";
 import { PostList } from "$domain/posts/PostList";
-import { usePaginationFragment } from "react-relay";
+import { usePaginationFragment, useSubscription } from "react-relay";
 import { UserPageRefetchQuery } from "$schemas/UserPageRefetchQuery.graphql";
 import { UserPage_user$key } from "$schemas/UserPage_user.graphql";
 import { Button } from "@mui/joy";
@@ -16,6 +16,16 @@ export const userPageQuery = graphql`
   }
 `;
 
+const userPageSubscription = graphql`
+  subscription UserPageSubscription($userId: ID!, $connections: [ID!]!) {
+    userFeed(userId: $userId) @prependEdge(connections: $connections) {
+      node {
+        ...PostList_post
+      }
+    }
+  }
+`;
+
 const UserPage_user = graphql`
   fragment UserPage_user on AppUser
   @argumentDefinitions(
@@ -23,6 +33,7 @@ const UserPage_user = graphql`
     count: { type: "Int", defaultValue: 5 }
   )
   @refetchable(queryName: "UserPageRefetchQuery") {
+    id
     posts(before: $cursor, last: $count)
       @connection(key: "UserPage_user_posts") {
       edges {
@@ -36,10 +47,26 @@ const UserPage_user = graphql`
 
 function _UserPage() {
   const { user } = usePreloadedRoute<UserPageQuery>(userPageQuery);
+
   const { data, loadPrevious } = usePaginationFragment<
     UserPageRefetchQuery,
     UserPage_user$key
   >(UserPage_user, user);
+
+  useSubscription(
+    useMemo(
+      () => ({
+        variables: {
+          userId: data.id,
+          connections: [
+            ConnectionHandler.getConnectionID(data.id, "UserPage_user_posts"),
+          ],
+        },
+        subscription: userPageSubscription,
+      }),
+      [data.id]
+    )
+  );
 
   const posts = useMemo(
     () => data.posts.edges.map((edge) => edge.node),
