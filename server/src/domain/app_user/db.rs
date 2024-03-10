@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::dataloader::Loader;
-use axum::async_trait;
 use deadpool_postgres::Pool;
 use tokio_postgres::Row;
 use tracing::instrument;
@@ -23,7 +22,6 @@ impl AppUserLoader {
     }
 }
 
-#[async_trait]
 impl Loader<DbId> for AppUserLoader {
     type Value = AppUser;
     type Error = Arc<DbError>;
@@ -58,7 +56,6 @@ impl FriendIdLoader {
     }
 }
 
-#[async_trait]
 impl Loader<DbId> for FriendIdLoader {
     type Value = Vec<DbId>;
     type Error = Arc<DbError>;

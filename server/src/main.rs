@@ -3,9 +3,10 @@ mod infrastructure;
 
 use std::net::SocketAddr;
 
-use axum::Server;
+use axum::serve;
+use tokio::net::TcpListener;
 
-use crate::infrastructure::{db, logging, router, schema, shutdown};
+use crate::infrastructure::{app_state::AppState, db, logging, router, schema, shutdown};
 
 #[tokio::main]
 async fn main() {
@@ -16,15 +17,18 @@ async fn main() {
 
     let pool = db::create_pool().expect("Pool should have been created");
     db::migrate(&pool).await.expect("Migrations should succeed");
-    let schema = schema::new(db::Saver::new(pool.clone()), pool.clone());
-    let router = router::new(pool, schema);
+
+    let app_state = AppState::new(pool);
+    let router = router::new(app_state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let listener = TcpListener::bind(addr)
+        .await
+        .expect("Should have bound to port");
     tracing::info!("Listening on {}", addr);
     tracing::info!("Visit GraphiQL: http://{}/graphql", addr);
 
-    Server::bind(&addr)
-        .serve(router.into_make_service())
+    serve(listener, router)
         .with_graceful_shutdown(shutdown::signal())
         .await
         .expect("Server should start");

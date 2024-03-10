@@ -4,26 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.75"
-async-graphql = { version = "6.0.6", features = ["dataloader", "time"] }
-async-graphql-axum = "6.0.6"
+async-graphql = { version = "7.0.2", features = ["dataloader", "time"] }
+async-graphql-axum = "7.0.2"
 async-stream = "0.3.5"
-axum = { version = "0.6.20", features = ["http2", "tracing", "ws"] }
-base64 = "0.21.7"
-deadpool-postgres = "0.11.0"
+axum = { version = "0.7.4", features = ["http2", "tracing", "ws"] }
+base64 = "0.22.0"
+deadpool-postgres = "0.12.1"
 dotenv = "0.15.0"
-hyper = { version = "0.14.27", features = ["full"] }
+hyper = { version = "1.2.0", features = ["full"] }
 postgres-types = { version = "0.2.6", features = ["derive"] }
-refinery = { version = "0.8.11", features = ["tokio-postgres"] }
-serde = "1.0.188"
-serde_json = "1.0.114"
+refinery = { version = "0.8.12", features = ["tokio-postgres"] }
+serde = "1.0.197"
 thiserror = "1.0.57"
-time = "0.3.28"
-tokio = { version = "1.32.0", features = ["full"] }
+time = "0.3.34"
+tokio = { version = "1.36.0", features = ["full"] }
 tokio-postgres = { version = "0.7.10", features = ["with-time-0_3"] }
 tokio-stream = "0.1.14"
 tower = "0.4.13"
-tower-http = { version = "0.4.4", features = ["full"] }
-tracing = "0.1.37"
-tracing-appender = "0.2.2"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tower-http = { version = "0.5.2", features = ["full"] }
+tracing = "0.1.40"
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

@@ -1,22 +1,20 @@
 use async_graphql::http::GraphiQLSource;
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
+    extract::State,
     response::{Html, IntoResponse},
-    Extension,
 };
-use deadpool_postgres::Pool;
 use tracing::instrument;
 
-use super::{db::Loaders, errors::InfrastructureError, schema::Schema};
+use super::{app_state::AppState, db::Loaders, errors::InfrastructureError};
 
 pub async fn graphql_handler(
-    Extension(schema): Extension<Schema>,
-    Extension(pool): Extension<Pool>,
+    State(state): State<AppState>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let req_with_loaders = req.into_inner().data(Loaders::new(pool));
+    let req_with_loaders = req.into_inner().data(Loaders::new(state.pool));
 
-    schema.execute(req_with_loaders).await.into()
+    state.schema.execute(req_with_loaders).await.into()
 }
 
 pub async fn graphiql() -> impl IntoResponse {
@@ -29,11 +27,12 @@ pub async fn graphiql() -> impl IntoResponse {
 }
 
 #[instrument(skip_all, err)]
-pub async fn health_check(
-    Extension(pool): Extension<Pool>,
-    _: Extension<Schema>,
-) -> Result<(), InfrastructureError> {
-    let _ = pool.get().await.map_err(InfrastructureError::health)?;
+pub async fn health_check(State(state): State<AppState>) -> Result<(), InfrastructureError> {
+    let _ = state
+        .pool
+        .get()
+        .await
+        .map_err(InfrastructureError::health)?;
 
     Ok(())
 }

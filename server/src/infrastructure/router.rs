@@ -1,6 +1,5 @@
 use async_graphql_axum::GraphQLSubscription;
-use axum::{routing::get, Extension, Router};
-use deadpool_postgres::Pool;
+use axum::{routing::get, Router};
 use std::time::Duration;
 use tower::ServiceBuilder;
 use tower_http::{
@@ -8,10 +7,9 @@ use tower_http::{
     timeout::TimeoutLayer, trace::TraceLayer,
 };
 
-use super::handlers;
-use super::schema::Schema;
+use super::{app_state::AppState, handlers};
 
-pub fn new(pool: Pool, schema: Schema) -> Router {
+pub fn new(app_state: AppState) -> Router {
     // Wrapped top to bottom
     let middleware = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
@@ -19,8 +17,6 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(CompressionLayer::new())
         .layer(CorsLayer::permissive())
-        .layer(Extension(schema.clone()))
-        .layer(Extension(pool))
         .into_inner();
 
     // Wrapped bottom to top
@@ -30,6 +26,10 @@ pub fn new(pool: Pool, schema: Schema) -> Router {
             "/graphql",
             get(handlers::graphiql).post(handlers::graphql_handler),
         )
-        .route_service("/graphql/ws", GraphQLSubscription::new(schema))
+        .route_service(
+            "/graphql/ws",
+            GraphQLSubscription::new(app_state.schema.clone()),
+        )
         .layer(middleware)
+        .with_state(app_state)
 }

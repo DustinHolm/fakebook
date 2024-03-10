@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::dataloader::Loader;
-use axum::async_trait;
 use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
@@ -24,7 +23,6 @@ impl CommentLoader {
     }
 }
 
-#[async_trait]
 impl Loader<DbId> for CommentLoader {
     type Value = Comment;
     type Error = Arc<DbError>;
@@ -59,7 +57,6 @@ impl CommentsOfPostLoader {
     }
 }
 
-#[async_trait]
 impl Loader<DbId> for CommentsOfPostLoader {
     type Value = Vec<Comment>;
     type Error = Arc<DbError>;
