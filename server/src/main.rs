@@ -13,7 +13,7 @@ async fn main() {
     schema::save_schema("./schema.graphql").expect("Should have written schema to file");
     dotenv::dotenv().expect(".env file should be available");
 
-    let _guard = logging::init(); // Guard flushes when main/server stops
+    let _guard = logging::init().expect("Logging should build"); // Guard flushes when main/server stops
 
     let pool = db::create_pool().expect("Pool should have been created");
     db::migrate(&pool).await.expect("Migrations should succeed");
@@ -25,6 +25,7 @@ async fn main() {
     let listener = TcpListener::bind(addr)
         .await
         .expect("Should have bound to port");
+
     tracing::info!("Listening on {}", addr);
     tracing::info!("Visit GraphiQL: http://{}/graphql", addr);
 

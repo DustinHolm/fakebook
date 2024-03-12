@@ -1,11 +1,11 @@
-use std::ops::DerefMut;
+use std::{future::Future, ops::DerefMut};
 
 use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Config, Pool, Runtime};
 use refinery::embed_migrations;
-use tokio::spawn;
+use tokio::{spawn, task::JoinHandle};
 use tokio_postgres::NoTls;
-use tracing::instrument;
+use tracing::{instrument, Instrument};
 
 use crate::domain::{
     app_user::{AppUserLoader, FriendIdLoader},
@@ -44,6 +44,14 @@ pub async fn migrate(pool: &Pool) -> Result<(), InfrastructureError> {
     Ok(())
 }
 
+fn spawn_in_span<F>(future: F) -> JoinHandle<F::Output>
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    spawn(future.in_current_span())
+}
+
 pub struct Loaders {
     pub app_user: DataLoader<AppUserLoader, HashMapCache>,
     pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
@@ -58,32 +66,32 @@ impl Loaders {
         Self {
             app_user: DataLoader::with_cache(
                 AppUserLoader::new(pool.clone()),
-                spawn,
+                spawn_in_span,
                 HashMapCache::default(),
             ),
             friend_id: DataLoader::with_cache(
                 FriendIdLoader::new(pool.clone()),
-                spawn,
+                spawn_in_span,
                 HashMapCache::default(),
             ),
             post: DataLoader::with_cache(
                 PostLoader::new(pool.clone()),
-                spawn,
+                spawn_in_span,
                 HashMapCache::default(),
             ),
             posts_of_author: DataLoader::with_cache(
                 PostsOfAuthorLoader::new(pool.clone()),
-                spawn,
+                spawn_in_span,
                 HashMapCache::default(),
             ),
             comment: DataLoader::with_cache(
                 CommentLoader::new(pool.clone()),
-                spawn,
+                spawn_in_span,
                 HashMapCache::default(),
             ),
             comments_of_post: DataLoader::with_cache(
                 CommentsOfPostLoader::new(pool),
-                spawn,
+                spawn_in_span,
                 HashMapCache::default(),
             ),
         }

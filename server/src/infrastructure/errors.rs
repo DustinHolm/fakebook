@@ -17,6 +17,8 @@ pub enum InfrastructureError {
     Filesystem(#[from] std::io::Error),
     #[error("Health check failed: {0}")]
     HealthCheck(#[source] Box<dyn std::error::Error>),
+    #[error("Logging could not start: {0}")]
+    Logging(#[source] Box<dyn std::error::Error>),
     #[error("Migrations failed: {0}")]
     Migrations(#[source] Box<refinery::Error>),
 }

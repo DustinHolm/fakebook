@@ -42,7 +42,7 @@ impl RootSubscription {
 
         let stream = stream!({
             loop {
-                if let Ok(posts) = load_posts(pool, &user_id, &last_seen).await {
+                if let Ok(posts) = poll_posts(pool, &user_id, &last_seen).await {
                     if !posts.is_empty() {
                         yield posts;
                     }
@@ -59,7 +59,7 @@ impl RootSubscription {
 }
 
 #[instrument(skip(pool), err)]
-async fn load_posts(
+async fn poll_posts(
     pool: &Pool,
     user_id: &DbId,
     last_seen: &OffsetDateTime,
