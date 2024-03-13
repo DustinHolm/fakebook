@@ -13,7 +13,7 @@ export const User = (id) =>
                 }
               }`,
       variables: {
-        id: id,
+        id,
       },
     })
   );
@@ -35,16 +35,16 @@ export const UserFriends = (id) =>
                 }
               }`,
       variables: {
-        id: id,
+        id,
       },
     })
   );
 
-export const UserFriendsPosts = (id) =>
+export const UserFriendsPosts = (id, nPaginated) =>
   http.post(
     graphqlUrl,
     JSON.stringify({
-      query: `query UserFriendsPosts($id: ID!) {
+      query: `query UserFriendsPosts($id: ID!, $nPaginated: Int) {
                 user(id: $id) {
                   id
                   firstName
@@ -53,7 +53,7 @@ export const UserFriendsPosts = (id) =>
                     id
                     firstName
                     lastName
-                    posts {
+                    posts(first: $nPaginated) {
                       edges {
                         node {
                           content
@@ -64,16 +64,17 @@ export const UserFriendsPosts = (id) =>
                 }
               }`,
       variables: {
-        id: id,
+        id,
+        nPaginated,
       },
     })
   );
 
-export const UserFriendsPostsComments = (id) =>
+export const UserFriendsPostsComments = (id, nPaginated) =>
   http.post(
     graphqlUrl,
     JSON.stringify({
-      query: `query UserFriendsPostsComments($id: ID!) {
+      query: `query UserFriendsPostsComments($id: ID!, $nPaginated: Int) {
                 user(id: $id) {
                   id
                   firstName
@@ -82,10 +83,10 @@ export const UserFriendsPostsComments = (id) =>
                     id
                     firstName
                     lastName
-                    posts {
+                    posts(first: $nPaginated) {
                       edges {
                         node {
-                          comments {
+                          comments(first: $nPaginated) {
                             edges {
                               node {
                                 content
@@ -99,7 +100,8 @@ export const UserFriendsPostsComments = (id) =>
                 }
               }`,
       variables: {
-        id: id,
+        id,
+        nPaginated,
       },
     })
   );
@@ -136,7 +138,7 @@ export const UserThriceNestedFriends = (id) =>
                 }
               }`,
       variables: {
-        id: id,
+        id,
       },
     })
   );
@@ -151,8 +153,8 @@ export const CreateUser = (first, last) =>
                 }
               }`,
       variables: {
-        first: first,
-        last: last,
+        first,
+        last,
       },
     })
   );
@@ -167,8 +169,8 @@ export const AddFriend = (user, friend) =>
                 }
               }`,
       variables: {
-        user: user,
-        friend: friend,
+        user,
+        friend,
       },
     })
   );

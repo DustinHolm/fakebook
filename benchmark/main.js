@@ -42,6 +42,7 @@ export const options = {
       duration: "20s",
       startTime: "20s",
       exec: "mixed",
+      env: { PAGINATION: "3" },
     },
     mean_requests: {
       executor: "shared-iterations",
@@ -75,13 +76,31 @@ export const options = {
       startTime: "80s",
       exec: "userFriendsPosts",
     },
-    user_and_friends_posts_with_comments: {
+    user_and_friends_posts_3_paginated: {
       executor: "shared-iterations",
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
       startTime: "90s",
+      exec: "userFriendsPosts",
+      env: { PAGINATION: "3" },
+    },
+    user_and_friends_posts_with_comments: {
+      executor: "shared-iterations",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "100s",
       exec: "userFriendsPostsComments",
+    },
+    user_and_friends_posts_with_comments_3_paginated: {
+      executor: "shared-iterations",
+      vus: 100,
+      iterations: 10000,
+      maxDuration: "10s",
+      startTime: "110s",
+      exec: "userFriendsPostsComments",
+      env: { PAGINATION: "3" },
     },
   },
 };
@@ -117,9 +136,12 @@ export const userFriends = () => {
 };
 
 export const userFriendsPosts = () => {
+  const pagination = __ENV.PAGINATION
+    ? Number.parseInt(__ENV.PAGINATION)
+    : undefined;
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
   id = encoding.b64encode(id + "AppUser", "url");
-  const res = UserFriendsPosts(id);
+  const res = UserFriendsPosts(id, pagination);
 
   check(res, {
     "response did not contain error": (r) =>
@@ -128,9 +150,12 @@ export const userFriendsPosts = () => {
 };
 
 export const userFriendsPostsComments = () => {
+  const pagination = __ENV.PAGINATION
+    ? Number.parseInt(__ENV.PAGINATION)
+    : undefined;
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
   id = encoding.b64encode(id + "AppUser", "url");
-  const res = UserFriendsPostsComments(id);
+  const res = UserFriendsPostsComments(id, pagination);
 
   check(res, {
     "response did not contain error": (r) =>

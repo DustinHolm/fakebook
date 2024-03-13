@@ -27,9 +27,23 @@
       }
     },
     {
-      "label": "Start Server",
+      "label": "Start Server for Benchmark",
       "type": "shell",
       "command": "cargo run --release",
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "Running"
+      },
+      "dependsOn": ["Build Server"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Server with Tracing",
+      "type": "shell",
+      "command": "cargo run -F otel",
       "options": {
         "cwd": "${workspaceFolder}/server"
       },
@@ -93,12 +107,17 @@
     },
     {
       "label": "Run Everything",
-      "dependsOn": ["Start DB", "Start Server", "Start Client", "Start Tracer"],
+      "dependsOn": [
+        "Start DB",
+        "Start Server with Tracing",
+        "Start Client",
+        "Start Tracer"
+      ],
       "problemMatcher": []
     },
     {
       "label": "Run Benchmark",
-      "dependsOn": ["Start DB", "Start Server", "Benchmark"],
+      "dependsOn": ["Start DB", "Start Server for Benchmark", "Benchmark"],
       "problemMatcher": []
     }
   ]
