@@ -3,8 +3,13 @@ use tracing::instrument;
 
 use crate::{
     domain::{
-        app_user::AppUser, comment::Comment, db_id::CanDecodeId as _, errors::GqlError, post::Post,
+        app_user::AppUser,
+        comment::Comment,
+        db_id::{CanDecodeId as _, DbId},
+        errors::GqlError,
+        post::Post,
         relay_meta::Node,
+        viewer::Viewer,
     },
     infrastructure::db::Loaders,
 };
@@ -74,5 +79,21 @@ impl RootQuery {
             .ok_or_else(|| GqlError::InvalidState("Expected empty vec, got None".to_string()))?;
 
         Ok(user)
+    }
+
+    #[instrument(skip(self, ctx), err)]
+    async fn viewer(&self, ctx: &Context<'_>) -> Result<Viewer, GqlError> {
+        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+
+        let id = DbId::from(1); // Placeholder until we have auth
+
+        let user = loaders
+            .app_user
+            .load_one(id)
+            .await
+            .map_err(|_| GqlError::DbLoad)?
+            .ok_or_else(|| GqlError::InvalidState("Expected empty vec, got None".to_string()))?;
+
+        Ok(Viewer::new(user))
     }
 }

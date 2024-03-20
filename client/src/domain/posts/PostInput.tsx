@@ -9,12 +9,8 @@ import { useFragment, useMutation } from "react-relay";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 const PostInputMutation = graphql`
-  mutation PostInputMutation(
-    $userId: ID!
-    $content: String!
-    $connections: [ID!]!
-  ) {
-    createPost(input: { author: $userId, content: $content })
+  mutation PostInputMutation($content: String!, $connections: [ID!]!) {
+    createPost(input: { content: $content })
       @prependEdge(connections: $connections) {
       node {
         ...PostList_post
@@ -24,8 +20,8 @@ const PostInputMutation = graphql`
 `;
 
 const PostInput_user = graphql`
-  fragment PostInput_user on AppUser {
-    id
+  fragment PostInput_user on Viewer {
+    __id
     firstName
     lastName
   }
@@ -48,13 +44,12 @@ function _PostInput(props: PostInputProps) {
   const handleSubmit = useCallback(
     function (data: FormInput) {
       const connectionID = ConnectionHandler.getConnectionID(
-        user.id,
-        "HomePageQuery_posts"
+        user.__id,
+        "HomePage_relevantPosts"
       );
 
       commit({
         variables: {
-          userId: user.id,
           content: data.content,
           connections: [connectionID],
         },
@@ -62,7 +57,7 @@ function _PostInput(props: PostInputProps) {
 
       form.reset();
     },
-    [user.id, commit, form]
+    [user.__id, commit, form]
   );
 
   return (

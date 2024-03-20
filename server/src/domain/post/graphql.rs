@@ -71,6 +71,5 @@ impl Post {
 
 #[derive(Debug, InputObject)]
 pub struct PostInput {
-    pub(in crate::domain) author: ID,
     pub(in crate::domain) content: String,
 }

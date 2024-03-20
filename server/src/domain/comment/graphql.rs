@@ -53,7 +53,6 @@ impl Comment {
 
 #[derive(Debug, InputObject)]
 pub struct CommentInput {
-    pub(in crate::domain) author: ID,
     pub(in crate::domain) content: String,
     pub(in crate::domain) referenced_post: ID,
 }

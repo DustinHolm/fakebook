@@ -85,6 +85,5 @@ pub struct AppUserInput {
 
 #[derive(InputObject, Debug)]
 pub struct AddFriendInput {
-    pub(in crate::domain) user: ID,
     pub(in crate::domain) friend: ID,
 }

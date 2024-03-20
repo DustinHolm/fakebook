@@ -12,7 +12,7 @@ pub const SUFFIX: &str = "Post";
 pub struct Post {
     pub post_id: DbId,
     pub(super) author: DbId,
-    pub(super) created_on: OffsetDateTime,
+    pub(in crate::domain) created_on: OffsetDateTime,
     pub(super) content: String,
 }
 

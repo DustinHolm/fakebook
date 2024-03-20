@@ -1,5 +1,4 @@
 input AddFriendInput {
-  user: ID!
   friend: ID!
 }
 
@@ -50,7 +49,6 @@ type CommentEdge {
 }
 
 input CommentInput {
-  author: ID!
   content: String!
   referencedPost: ID!
 }
@@ -130,7 +128,6 @@ type PostEdge {
 }
 
 input PostInput {
-  author: ID!
   content: String!
 }
 
@@ -144,12 +141,27 @@ type RootMutation {
 type RootQuery {
   node(id: ID!): Node!
   user(id: ID!): AppUser!
+  viewer: Viewer!
 }
 
 type RootSubscription {
   userFeed(userId: ID!): [PostEdge!]!
+  homeFeed: [PostEdge!]!
 }
 
+type Viewer {
+  firstName: String!
+  lastName: String!
+  relevantPosts(
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): PostConnection!
+}
+
+directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
 schema {
   query: RootQuery
   mutation: RootMutation

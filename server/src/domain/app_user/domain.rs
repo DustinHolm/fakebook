@@ -10,8 +10,8 @@ pub const SUFFIX: &str = "AppUser";
 #[derive(Clone)]
 pub struct AppUser {
     pub(super) user_id: DbId,
-    pub(super) first_name: String,
-    pub(super) last_name: String,
+    pub(in crate::domain) first_name: String,
+    pub(in crate::domain) last_name: String,
 }
 
 impl HasDbId for AppUser {

@@ -5,7 +5,6 @@ import { UserPage, userPageQuery } from "$domain/user/UserPage";
 import { loadQuery } from "react-relay";
 import { relayEnvironment } from "../relayEnvironment";
 import { ErrorFallback } from "./ErrorFallback";
-import { useGlobalState } from "$domain/globalState";
 
 export const router = createBrowserRouter([
   {
@@ -15,11 +14,7 @@ export const router = createBrowserRouter([
         path: "/",
         element: <HomePage />,
         loader: async () => {
-          const id = useGlobalState.getState().currentUser.id;
-          if (!id) {
-            throw Error("Not logged in and no way to currently login :(");
-          }
-          return loadQuery(relayEnvironment, homePageQuery, { id });
+          return loadQuery(relayEnvironment, homePageQuery, {});
         },
       },
       {

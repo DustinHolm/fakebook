@@ -5,3 +5,4 @@ mod errors;
 pub mod post;
 mod relay_meta;
 pub mod schema;
+pub mod viewer;

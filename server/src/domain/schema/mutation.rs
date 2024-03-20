@@ -8,7 +8,7 @@ use crate::{
     domain::{
         app_user::{AddFriendInput, AppUser, AppUserInput},
         comment::{Comment, CommentInput},
-        db_id::CanDecodeId,
+        db_id::{CanDecodeId, DbId},
         errors::GqlError,
         post::{Post, PostInput},
         relay_meta::AppCursor,
@@ -43,8 +43,7 @@ impl RootMutation {
         let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
         let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
 
-        let user_id =
-            AppUser::decode(&input.user).map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
+        let user_id = DbId::from(1); // Placeholder until we have auth
         let friend_id =
             AppUser::decode(&input.friend).map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
 
@@ -80,8 +79,7 @@ impl RootMutation {
     ) -> Result<Edge<AppCursor, Post, EmptyFields>, GqlError> {
         let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
 
-        let author =
-            AppUser::decode(&input.author).map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
+        let author = DbId::from(1); // Placeholder until we have auth
 
         let saved = saver
             .save_post(&author, &input.content)
@@ -99,8 +97,7 @@ impl RootMutation {
     ) -> Result<Edge<AppCursor, Comment, EmptyFields>, GqlError> {
         let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
 
-        let author_id =
-            AppUser::decode(&input.author).map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
+        let author_id = DbId::from(1); // Placeholder until we have auth
 
         let referenced_post_id = Post::decode(&input.referenced_post)
             .map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
