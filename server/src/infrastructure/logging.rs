@@ -1,12 +1,15 @@
-#[cfg(otel)]
+use hyper::Request;
+#[cfg(feature = "otel")]
 use opentelemetry_sdk::runtime;
+use tower_http::trace::MakeSpan;
+use tracing::{span, Level, Span};
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::prelude::*;
 
 use super::errors::InfrastructureError;
 
 pub fn init() -> Result<WorkerGuard, InfrastructureError> {
-    #[cfg(otel)]
+    #[cfg(feature = "otel")]
     let tracing = opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(opentelemetry_otlp::new_exporter().tonic())
@@ -19,13 +22,29 @@ pub fn init() -> Result<WorkerGuard, InfrastructureError> {
         .with(tracing_subscriber::EnvFilter::from_default_env())
         .with(tracing_subscriber::fmt::layer().with_writer(non_blocking_writer));
 
-    #[cfg(otel)]
+    #[cfg(feature = "otel")]
     registry
         .with(tracing_opentelemetry::layer().with_tracer(tracing))
         .init();
 
-    #[cfg(not(otel))]
+    #[cfg(not(feature = "otel"))]
     registry.init();
 
     Ok(guard)
+}
+
+#[derive(Clone)]
+pub(super) struct CustomMakeSpan;
+
+impl<B> MakeSpan<B> for CustomMakeSpan {
+    fn make_span(&mut self, request: &Request<B>) -> Span {
+        span!(
+            Level::DEBUG,
+            "request",
+            method = %request.method(),
+            uri = %request.uri(),
+            version = ?request.version(),
+            otel.kind = "server"
+        )
+    }
 }

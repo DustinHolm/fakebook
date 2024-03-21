@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use async_graphql::dataloader::Loader;
 use deadpool_postgres::Pool;
 use tokio_postgres::Row;
-use tracing::instrument;
+use tracing::{instrument, Level};
 
 use crate::{
     domain::{db_id::DbId, errors::DbError},
@@ -170,7 +170,7 @@ impl Saver {
 impl TryFrom<Row> for AppUser {
     type Error = DbError;
 
-    #[instrument(err)]
+    #[instrument(level = Level::TRACE, err)]
     fn try_from(value: Row) -> Result<Self, Self::Error> {
         Ok(AppUser {
             user_id: value.try_get("user_id").map_err(DbError::mapping)?,

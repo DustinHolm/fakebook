@@ -7,12 +7,12 @@ use tower_http::{
     timeout::TimeoutLayer, trace::TraceLayer,
 };
 
-use super::{app_state::AppState, handlers};
+use super::{app_state::AppState, handlers, logging::CustomMakeSpan};
 
 pub fn new(app_state: AppState) -> Router {
     // Wrapped top to bottom
     let middleware = ServiceBuilder::new()
-        .layer(TraceLayer::new_for_http())
+        .layer(TraceLayer::new_for_http().make_span_with(CustomMakeSpan))
         .layer(CatchPanicLayer::new())
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(CompressionLayer::new())

@@ -4,7 +4,7 @@ use async_graphql::dataloader::Loader;
 use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
-use tracing::instrument;
+use tracing::{instrument, Level};
 
 use crate::{
     domain::{db_id::DbId, errors::DbError},
@@ -114,7 +114,7 @@ impl Saver {
 impl TryFrom<Row> for Post {
     type Error = DbError;
 
-    #[instrument(err)]
+    #[instrument(level = Level::TRACE, err)]
     fn try_from(value: Row) -> Result<Self, Self::Error> {
         Ok(Post {
             post_id: value.try_get("post_id").map_err(DbError::mapping)?,

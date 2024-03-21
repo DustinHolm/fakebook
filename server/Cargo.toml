@@ -12,9 +12,13 @@ base64 = "0.22.0"
 deadpool-postgres = "0.12.1"
 dotenv = "0.15.0"
 hyper = { version = "1.2.0", features = ["full"] }
-opentelemetry = "0.22.0"
-opentelemetry-otlp = { version = "0.15.0", features = ["trace"] }
-opentelemetry_sdk = { version = "0.22.1", features = ["rt-tokio"] }
+opentelemetry = { version = "0.22.0", optional = true }
+opentelemetry-otlp = { version = "0.15.0", features = [
+    "trace",
+], optional = true }
+opentelemetry_sdk = { version = "0.22.1", features = [
+    "rt-tokio",
+], optional = true }
 postgres-types = { version = "0.2.6", features = ["derive"] }
 refinery = { version = "0.8.12", features = ["tokio-postgres"] }
 serde = "1.0.197"
@@ -27,8 +31,14 @@ tower = "0.4.13"
 tower-http = { version = "0.5.2", features = ["full"] }
 tracing = "0.1.40"
 tracing-appender = "0.2.3"
-tracing-opentelemetry = { version = "0.23.0" }
+tracing-opentelemetry = { version = "0.23.0", optional = true }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [features]
-otel = []
+default = ["otel"]
+otel = [
+    "dep:opentelemetry",
+    "dep:opentelemetry-otlp",
+    "dep:opentelemetry_sdk",
+    "dep:tracing-opentelemetry",
+]
