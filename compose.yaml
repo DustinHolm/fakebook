@@ -1,0 +1,54 @@
+name: "fakebook"
+
+services:
+  database:
+    image: "postgres:16-alpine"
+    command: "-c log_statement=all"
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes: ["database-volume:/var/lib/postgresql/data"]
+    healthcheck:
+      test: "pg_isready -d postgres -U postgres"
+      interval: "10s"
+      timeout: "5s"
+
+  tracer:
+    image: "jaegertracing/all-in-one:latest"
+    ports: ["16686:16686", "4317:4317"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  server:
+    build: "./server"
+    ports: ["3000:3000"]
+    env_file: "./server/.env"
+    environment:
+      HOSTING_ADDRESS: "0.0.0.0:3000"
+      PG_HOST: "database"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://tracer:4317"
+    depends_on:
+      database:
+        condition: "service_healthy"
+      tracer:
+        condition: "service_started"
+    profiles: ["full", "benchmark"]
+    pull_policy: "build"
+
+  client:
+    build: "./client"
+    ports: ["80:80"]
+    profiles: ["full"]
+    pull_policy: "build"
+
+  benchmark:
+    image: "grafana/k6:latest"
+    command: "run /app/main.js"
+    environment:
+      SERVER_URL: "server:3000"
+    volumes: ["./benchmark:/app"]
+    depends_on: ["server"]
+
+volumes:
+  database-volume:

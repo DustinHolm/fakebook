@@ -1,2 +1,4 @@
-export const healthUrl = "http://localhost:3000/health-check";
-export const graphqlUrl = "http://localhost:3000/graphql";
+const SERVER_URL = __ENV.SERVER_URL || "localhost:3000";
+
+export const healthUrl = `http://${SERVER_URL}/health-check`;
+export const graphqlUrl = `http://${SERVER_URL}/graphql`;

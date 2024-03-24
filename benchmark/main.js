@@ -16,7 +16,12 @@ import {
 
 export const options = {
   thresholds: {
-    checks: ["rate == 1"],
+    checks: [
+      {
+        threshold: "rate == 1",
+        abortOnFail: true,
+      },
+    ],
     http_req_duration: ["max < 500", "p(95) < 330", "med < 150"],
   },
   scenarios: {
@@ -25,7 +30,7 @@ export const options = {
       vus: 10,
       iterations: 100,
       maxDuration: "1s",
-      startTime: "1s",
+      startTime: "5s",
       exec: "smoke",
     },
     mutations: {

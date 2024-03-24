@@ -1,0 +1,4 @@
+node_modules
+.swc
+__generated__
+dist

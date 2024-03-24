@@ -2,7 +2,6 @@ use std::{future::Future, ops::DerefMut};
 
 use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Config, Pool, Runtime};
-use refinery::embed_migrations;
 use tokio::{spawn, task::JoinHandle};
 use tokio_postgres::NoTls;
 use tracing::{instrument, Instrument};
@@ -15,7 +14,17 @@ use crate::domain::{
 
 use super::errors::InfrastructureError;
 
-embed_migrations!();
+mod default {
+    use refinery::embed_migrations;
+
+    embed_migrations!();
+}
+
+mod debug {
+    use refinery::embed_migrations;
+
+    embed_migrations!("migrations/debug");
+}
 
 #[instrument(skip_all, err)]
 pub fn create_pool() -> Result<Pool, InfrastructureError> {
@@ -38,9 +47,17 @@ pub fn create_pool() -> Result<Pool, InfrastructureError> {
 #[instrument(skip_all, err)]
 pub async fn migrate(pool: &Pool) -> Result<(), InfrastructureError> {
     let mut db = pool.get().await?;
-    migrations::runner()
+
+    default::migrations::runner()
+        .set_abort_missing(false)
         .run_async(db.deref_mut().deref_mut())
         .await?;
+
+    debug::migrations::runner()
+        .set_abort_missing(false)
+        .run_async(db.deref_mut().deref_mut())
+        .await?;
+
     Ok(())
 }
 

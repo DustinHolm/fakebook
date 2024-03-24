@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vite",
+    "serve": "vite preview",
     "build": "relay-compiler --validate && vite build",
     "lint": "tsc && eslint .",
     "relay": "relay-compiler"
