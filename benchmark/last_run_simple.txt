@@ -1,12 +1,13 @@
-      ✓ response did not contain error
+      ✗ response did not contain error
+       ↳  30% — ✓ 741 / ✗ 1688
 
-    ✓ checks.....................: 100.00% ✓ 9980       ✗ 0   
-      http_req_blocked...........: avg=4.37ms   min=857ns   med=1.89µs  max=120.45ms p(90)=87.02µs p(95)=44.48ms
-      http_req_connecting........: avg=4.31ms   min=0s      med=0s      max=120.42ms p(90)=44.43µs p(95)=44.41ms
-    ✗ http_req_duration..........: avg=2.11s    min=60.93ms med=2.19s   max=4s       p(90)=3.54s   p(95)=3.62s  
-      http_req_failed............: 0.00%   ✓ 0          ✗ 9980
-      http_req_receiving.........: avg=59.7µs   min=12.72µs med=41.37µs max=38.11ms  p(90)=64.69µs p(95)=86.96µs
-      http_req_sending...........: avg=496.84µs min=5.32µs  med=10.83µs max=41.56ms  p(90)=98.07µs p(95)=2.95ms 
-      http_req_tls_handshaking...: avg=0s       min=0s      med=0s      max=0s       p(90)=0s      p(95)=0s     
-      http_req_waiting...........: avg=2.11s    min=60.81ms med=2.19s   max=4s       p(90)=3.54s   p(95)=3.62s  
-      http_reqs..................: 9980    435.609082/s
+    ✗ checks.....................: 30.50% ✓ 741         ✗ 1688
+      http_req_blocked...........: avg=11.85ms  min=0s med=1.75µs   max=118.93ms p(90)=49.9ms  p(95)=68.57ms
+      http_req_connecting........: avg=11.63ms  min=0s med=0s       max=117.48ms p(90)=49.64ms p(95)=68.37ms
+    ✗ http_req_duration..........: avg=473.73ms min=0s med=103.5ms  max=1.64s    p(90)=1.57s   p(95)=1.6s   
+      http_req_failed............: 78.23% ✓ 2664        ✗ 741 
+      http_req_receiving.........: avg=11.96µs  min=0s med=0s       max=1.45ms   p(90)=36.93µs p(95)=52.37µs
+      http_req_sending...........: avg=460.69µs min=0s med=10.48µs  max=39.14ms  p(90)=1.48ms  p(95)=1.9ms  
+      http_req_tls_handshaking...: avg=0s       min=0s med=0s       max=0s       p(90)=0s      p(95)=0s     
+      http_req_waiting...........: avg=473.25ms min=0s med=103.46ms max=1.63s    p(90)=1.57s   p(95)=1.6s   
+      http_reqs..................: 3405   1759.134162/s
