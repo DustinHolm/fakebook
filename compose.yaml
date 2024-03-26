@@ -4,6 +4,7 @@ services:
   database:
     image: "postgres:16-alpine"
     command: "-c log_statement=all"
+    ports: ["5432:5432"]
     environment:
       POSTGRES_DB: "postgres"
       POSTGRES_USER: "postgres"
@@ -35,6 +36,10 @@ services:
         condition: "service_started"
     profiles: ["full", "benchmark"]
     pull_policy: "build"
+    deploy:
+      resources:
+        limits:
+          memory: 250M
 
   client:
     build: "./client"
@@ -48,6 +53,7 @@ services:
     environment:
       SERVER_URL: "server:3000"
     volumes: ["./benchmark:/app"]
+    profiles: ["benchmark"]
     depends_on: ["server"]
 
 volumes:

@@ -13,6 +13,7 @@ import {
   UserFriendsPostsComments,
   UserThriceNestedFriends,
 } from "./requests.js";
+import { handleSummaryFn } from "./summary.js";
 
 export const options = {
   thresholds: {
@@ -223,17 +224,4 @@ export const mean = () => {
   });
 };
 
-export const handleSummary = (data) => {
-  delete data.metrics["http_req_duration{expected_response:true}"];
-
-  for (const key in data.metrics) {
-    if (key.startsWith("data")) delete data.metrics[key];
-    if (key.startsWith("iteration")) delete data.metrics[key];
-    if (key.startsWith("vus")) delete data.metrics[key];
-  }
-
-  return {
-    stdout: textSummary(data),
-    "./last_run.txt": textSummary(data, { indent: "  ", enableColors: false }),
-  };
-};
+export const handleSummary = handleSummaryFn;

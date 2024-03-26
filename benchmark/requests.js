@@ -159,17 +159,16 @@ export const CreateUser = (first, last) =>
     })
   );
 
-export const AddFriend = (user, friend) =>
+export const AddFriend = (_, friend) =>
   http.post(
     graphqlUrl,
     JSON.stringify({
-      query: `mutation CreateUser($user: ID!, $friend: ID!) {
-                addFriend(input: { user: $user, friend: $friend }) {
+      query: `mutation CreateUser($friend: ID!) {
+                addFriend(input: { friend: $friend }) {
                   id
                 }
               }`,
       variables: {
-        user,
         friend,
       },
     })
