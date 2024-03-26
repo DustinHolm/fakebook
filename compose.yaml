@@ -39,7 +39,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 250M
+          memory: 500M
 
   client:
     build: "./client"
