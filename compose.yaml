@@ -36,10 +36,6 @@ services:
         condition: "service_started"
     profiles: ["full", "benchmark"]
     pull_policy: "build"
-    deploy:
-      resources:
-        limits:
-          memory: 100M
 
   client:
     build: "./client"
