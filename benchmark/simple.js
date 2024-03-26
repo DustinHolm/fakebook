@@ -6,8 +6,8 @@ import {
   UserFriends,
   UserFriendsPosts,
   UserFriendsPostsComments,
-} from "./requests.js";
-import { handleSummaryFn } from "./summary.js";
+} from "./util/requests.js";
+import { handleSummaryFn } from "./util/summary.js";
 
 export const options = {
   thresholds: {
@@ -51,4 +51,4 @@ export const mixed = () => {
   });
 };
 
-export const handleSummary = handleSummaryFn;
+export const handleSummary = (data) => handleSummaryFn(data, "simple");

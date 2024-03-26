@@ -1,9 +1,8 @@
-import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.2/index.js";
 import http from "k6/http";
 import exec from "k6/execution";
 import encoding from "k6/encoding";
 import { check } from "k6";
-import { healthUrl } from "./urls.js";
+import { healthUrl } from "./util/urls.js";
 import {
   AddFriend,
   CreateUser,
@@ -12,8 +11,8 @@ import {
   UserFriendsPosts,
   UserFriendsPostsComments,
   UserThriceNestedFriends,
-} from "./requests.js";
-import { handleSummaryFn } from "./summary.js";
+} from "./util/requests.js";
+import { handleSummaryFn } from "./util/summary.js";
 
 export const options = {
   thresholds: {
@@ -224,4 +223,4 @@ export const mean = () => {
   });
 };
 
-export const handleSummary = handleSummaryFn;
+export const handleSummary = (data) => handleSummaryFn(data, "full");

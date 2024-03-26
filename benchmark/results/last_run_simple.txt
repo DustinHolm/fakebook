@@ -1,0 +1,12 @@
+      ✓ response did not contain error
+
+    ✓ checks.....................: 100.00% ✓ 10607      ✗ 0    
+      http_req_blocked...........: avg=3.94ms   min=854ns   med=1.99µs  max=108.18ms p(90)=16.16µs  p(95)=30.1ms  
+      http_req_connecting........: avg=3.86ms   min=0s      med=0s      max=97.28ms  p(90)=0s       p(95)=28.09ms 
+    ✗ http_req_duration..........: avg=2s       min=26.74ms med=2.11s   max=3.76s    p(90)=3.33s    p(95)=3.44s   
+      http_req_failed............: 0.00%   ✓ 0          ✗ 10607
+      http_req_receiving.........: avg=87.66µs  min=11.83µs med=42.46µs max=38.83ms  p(90)=82.52µs  p(95)=156.27µs
+      http_req_sending...........: avg=360.93µs min=5.2µs   med=11.29µs max=23.95ms  p(90)=132.38µs p(95)=1.65ms  
+      http_req_tls_handshaking...: avg=0s       min=0s      med=0s      max=0s       p(90)=0s       p(95)=0s      
+      http_req_waiting...........: avg=2s       min=19.5ms  med=2.11s   max=3.76s    p(90)=3.33s    p(95)=3.44s   
+      http_reqs..................: 10607   457.214477/s

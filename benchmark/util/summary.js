@@ -1,6 +1,6 @@
 import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.2/index.js";
 
-export const handleSummaryFn = (data) => {
+export const handleSummaryFn = (data, suffix) => {
   delete data.metrics["http_req_duration{expected_response:true}"];
 
   for (const key in data.metrics) {
@@ -9,9 +9,11 @@ export const handleSummaryFn = (data) => {
     if (key.startsWith("vus")) delete data.metrics[key];
   }
 
+  const outputFile = `./results/last_run_${suffix}.txt`;
+
   return {
     stdout: textSummary(data),
-    "./last_run_simple.txt": textSummary(data, {
+    [outputFile]: textSummary(data, {
       indent: "  ",
       enableColors: false,
     }),

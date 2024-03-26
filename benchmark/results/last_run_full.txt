@@ -1,0 +1,14 @@
+      ✗ response did not contain error
+       ↳  99% — ✓ 21235 / ✗ 51
+
+    ✗ checks.....................: 99.76% ✓ 21235      ✗ 51   
+      dropped_iterations.........: 9787   88.910509/s
+      http_req_blocked...........: avg=3.81ms   min=766ns   med=1.69µs   max=1.58s    p(90)=3.25µs  p(95)=334.73µs
+      http_req_connecting........: avg=1.83ms   min=0s      med=0s       max=858.96ms p(90)=0s      p(95)=119.42µs
+    ✗ http_req_duration..........: avg=1.18s    min=66.72µs med=340.76ms max=32.54s   p(90)=3.13s   p(95)=3.28s   
+      http_req_failed............: 0.23%  ✓ 51         ✗ 21235
+      http_req_receiving.........: avg=892.18µs min=6.43µs  med=31.32µs  max=257.69ms p(90)=70.29µs p(95)=138.51µs
+      http_req_sending...........: avg=344.69µs min=3.53µs  med=9.93µs   max=626.5ms  p(90)=22.65µs p(95)=203.7µs 
+      http_req_tls_handshaking...: avg=0s       min=0s      med=0s       max=0s       p(90)=0s      p(95)=0s      
+      http_req_waiting...........: avg=1.18s    min=56.32µs med=328.03ms max=32.44s   p(90)=3.13s   p(95)=3.28s   
+      http_reqs..................: 21286  193.373772/s
