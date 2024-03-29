@@ -17,7 +17,7 @@ export const options = {
   scenarios: {
     mixed_requests_spike: {
       executor: "constant-vus",
-      vus: 1000,
+      vus: 100,
       duration: "20s",
       exec: "mixed",
       env: { PAGINATION: "3" },

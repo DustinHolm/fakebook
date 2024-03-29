@@ -1,12 +1,12 @@
       ✓ response did not contain error
 
-    ✓ checks.....................: 100.00% ✓ 456183       ✗ 0     
-      http_req_blocked...........: avg=72.11µs min=406ns   med=791ns   max=84.76ms  p(90)=1.26µs  p(95)=1.59µs 
-      http_req_connecting........: avg=68.34µs min=0s      med=0s      max=84.74ms  p(90)=0s      p(95)=0s     
-    ✓ http_req_duration..........: avg=43.18ms min=70.87µs med=38.84ms max=272.64ms p(90)=74.4ms  p(95)=89.07ms
-      http_req_failed............: 0.00%   ✓ 0            ✗ 456183
-      http_req_receiving.........: avg=37.49µs min=4.87µs  med=9.55µs  max=90.58ms  p(90)=16.47µs p(95)=49.25µs
-      http_req_sending...........: avg=20.54µs min=2.29µs  med=3.91µs  max=90.4ms   p(90)=7.18µs  p(95)=13.07µs
-      http_req_tls_handshaking...: avg=0s      min=0s      med=0s      max=0s       p(90)=0s      p(95)=0s     
-      http_req_waiting...........: avg=43.12ms min=60.12µs med=38.8ms  max=272.62ms p(90)=74.32ms p(95)=88.96ms
-      http_reqs..................: 456183  22755.101879/s
+    ✓ checks.....................: 100.00% ✓ 511161       ✗ 0     
+      http_req_blocked...........: avg=2.78µs  min=432ns   med=795ns  max=24.56ms  p(90)=1.24µs  p(95)=1.6µs  
+      http_req_connecting........: avg=616ns   min=0s      med=0s     max=9.58ms   p(90)=0s      p(95)=0s     
+    ✓ http_req_duration..........: avg=3.81ms  min=58.85µs med=2.88ms max=112.93ms p(90)=7.18ms  p(95)=9.66ms 
+      http_req_failed............: 0.00%   ✓ 0            ✗ 511161
+      http_req_receiving.........: avg=27.92µs min=4.71µs  med=9.13µs max=38.49ms  p(90)=13.49µs p(95)=17.99µs
+      http_req_sending...........: avg=12.65µs min=2.34µs  med=3.84µs max=48.16ms  p(90)=6.76µs  p(95)=8µs    
+      http_req_tls_handshaking...: avg=0s      min=0s      med=0s     max=0s       p(90)=0s      p(95)=0s     
+      http_req_waiting...........: avg=3.77ms  min=47.37µs med=2.85ms max=112.92ms p(90)=7.11ms  p(95)=9.56ms 
+      http_reqs..................: 511161  25553.618081/s

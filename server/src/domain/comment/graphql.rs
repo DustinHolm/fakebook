@@ -19,6 +19,7 @@ impl Comment {
     }
 
     #[instrument(skip_all, err)]
+    #[graphql(complexity = 3)]
     async fn referenced_post(&self, ctx: &Context<'_>) -> Result<Post, GqlError> {
         let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
 
@@ -31,6 +32,7 @@ impl Comment {
     }
 
     #[instrument(skip_all, err)]
+    #[graphql(complexity = 3)]
     async fn author(&self, ctx: &Context<'_>) -> Result<AppUser, GqlError> {
         let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
 

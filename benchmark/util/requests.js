@@ -183,12 +183,34 @@ export const UserThriceNestedFriends = (id) =>
                         id
                         firstName
                         lastName
-                        friends {
-                          id
-                          firstName
-                          lastName
-                        }
                       }
+                    }
+                  }
+                }
+              }`,
+      variables: {
+        id,
+      },
+    })
+  );
+
+export const UserDoubleNestedFriends = (id) =>
+  http.post(
+    graphqlUrl,
+    JSON.stringify({
+      query: `query UserDoubleNestedFriends($id: ID!) {
+                user(id: $id) {
+                  id
+                  firstName
+                  lastName
+                  friends {
+                    id
+                    firstName
+                    lastName
+                    friends {
+                      id
+                      firstName
+                      lastName
                     }
                   }
                 }

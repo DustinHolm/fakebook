@@ -1,7 +1,7 @@
 import exec from "k6/execution";
 import encoding from "k6/encoding";
 import { check } from "k6";
-import { UserPosts, UserPostsComments } from "./util/requests.js";
+import { UserThriceNestedFriends } from "./util/requests.js";
 import { handleSummaryFn } from "./util/summary.js";
 
 export const options = {
@@ -15,25 +15,25 @@ export const options = {
     http_req_duration: ["max < 500", "p(95) < 330", "med < 150"],
   },
   scenarios: {
-    mixed_requests_spike: {
-      executor: "constant-vus",
-      vus: 100,
-      duration: "20s",
-      exec: "mixed",
-      env: { PAGINATION: "3" },
+    mean_requests: {
+      executor: "shared-iterations",
+      vus: 1,
+      iterations: 10,
+      maxDuration: "20s",
+      exec: "mean",
     },
   },
 };
 
 const maxUserIdQuery = 5000;
 
-const mixedRequests = [UserPosts, UserPostsComments];
-export const mixed = () => {
-  const i = exec.scenario.iterationInInstance % mixedRequests.length;
+const meanRequests = [UserThriceNestedFriends];
+export const mean = () => {
+  const i = exec.scenario.iterationInInstance % meanRequests.length;
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
   id = encoding.b64encode(id + "AppUser", "url");
 
-  const res = mixedRequests[i](id);
+  const res = meanRequests[i](id);
 
   check(res, {
     "response did not contain error": (r) =>
@@ -41,4 +41,4 @@ export const mixed = () => {
   });
 };
 
-export const handleSummary = (data) => handleSummaryFn(data, "postComments");
+export const handleSummary = (data) => handleSummaryFn(data, "mean");

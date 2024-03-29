@@ -19,6 +19,10 @@ impl Viewer {
     }
 
     #[instrument(skip(self, ctx), err)]
+    #[graphql(
+        complexity = "first.unwrap_or(0).try_into().unwrap_or(usize::MAX) * child_complexity 
+        + last.unwrap_or(0).try_into().unwrap_or(usize::MAX) * child_complexity"
+    )]
     async fn relevant_posts(
         &self,
         ctx: &Context<'_>,

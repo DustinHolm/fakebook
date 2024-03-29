@@ -1,7 +1,12 @@
-use std::fs;
+use std::{fs, sync::Arc};
 
-use async_graphql::SchemaBuilder;
+use async_graphql::{
+    extensions::{Extension, ExtensionContext, ExtensionFactory, NextValidation},
+    SchemaBuilder, ServerError, ValidationResult,
+};
+use axum::async_trait;
 use deadpool_postgres::Pool;
+use tracing::debug;
 
 use crate::domain::schema::{RootMutation, RootQuery, RootSubscription};
 
@@ -20,6 +25,8 @@ pub fn new(saver: Saver, pool: Pool) -> Schema {
         .data(Loaders::new(pool.clone()))
         .data(saver)
         .data(pool)
+        .extension(ComplexityExtensionFactory)
+        .limit_complexity(1000)
         .finish()
 }
 
@@ -30,3 +37,26 @@ pub fn save_schema(path: &str) -> Result<(), InfrastructureError> {
 }
 
 pub type Schema = async_graphql::Schema<RootQuery, RootMutation, RootSubscription>;
+
+struct ComplexityExtensionFactory;
+
+impl ExtensionFactory for ComplexityExtensionFactory {
+    fn create(&self) -> Arc<dyn Extension> {
+        Arc::new(ComplexityExtension)
+    }
+}
+
+struct ComplexityExtension;
+
+#[async_trait]
+impl Extension for ComplexityExtension {
+    async fn validation(
+        &self,
+        ctx: &ExtensionContext<'_>,
+        next: NextValidation<'_>,
+    ) -> Result<ValidationResult, Vec<ServerError>> {
+        let res = next.run(ctx).await;
+        debug!("complexity: {:?}", res.as_ref().map(|it| it.complexity));
+        res
+    }
+}

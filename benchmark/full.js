@@ -10,7 +10,7 @@ import {
   UserFriends,
   UserFriendsPosts,
   UserFriendsPostsComments,
-  UserThriceNestedFriends,
+  UserDoubleNestedFriends,
 } from "./util/requests.js";
 import { handleSummaryFn } from "./util/summary.js";
 
@@ -209,7 +209,7 @@ export const mutation = () => {
   });
 };
 
-const meanRequests = [UserThriceNestedFriends];
+const meanRequests = [UserDoubleNestedFriends];
 export const mean = () => {
   const i = exec.scenario.iterationInInstance % meanRequests.length;
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;

@@ -24,6 +24,7 @@ impl Post {
     }
 
     #[instrument(skip_all, err)]
+    #[graphql(complexity = 3)]
     async fn author(&self, ctx: &Context<'_>) -> Result<AppUser, GqlError> {
         let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
 
@@ -44,6 +45,10 @@ impl Post {
     }
 
     #[instrument(skip_all, err)]
+    #[graphql(
+        complexity = "first.unwrap_or(0).try_into().unwrap_or(usize::MAX) * child_complexity 
+        + last.unwrap_or(0).try_into().unwrap_or(usize::MAX) * child_complexity"
+    )]
     async fn comments(
         &self,
         ctx: &Context<'_>,
