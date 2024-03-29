@@ -56,7 +56,14 @@ impl Extension for ComplexityExtension {
         next: NextValidation<'_>,
     ) -> Result<ValidationResult, Vec<ServerError>> {
         let res = next.run(ctx).await;
-        debug!("complexity: {:?}", res.as_ref().map(|it| it.complexity));
+
+        debug!(
+            "Complexity: {:?}",
+            res.as_ref()
+                .map(|it| it.complexity.to_string())
+                .unwrap_or("unknown".to_string())
+        );
+
         res
     }
 }

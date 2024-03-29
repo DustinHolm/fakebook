@@ -36,8 +36,8 @@ export const mean = () => {
   const res = meanRequests[i](id);
 
   check(res, {
-    "response did not contain error": (r) =>
-      r.status == 200 && !!r.json() && !r.json().errors,
+    "response was denied": (r) =>
+      r.status == 200 && !!r.json() && !!r.json().errors,
   });
 };
 

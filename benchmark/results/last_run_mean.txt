@@ -1,3 +1,12 @@
-    ✓ checks...............: 0.00% ✓ 0       ✗ 0
-      dropped_iterations...: 9     0.08301/s
-    ✓ http_req_duration....: avg=0s min=0s med=0s max=0s p(90)=0s p(95)=0s
+      ✓ response was denied
+
+    ✓ checks.....................: 100.00% ✓ 10          ✗ 0 
+      http_req_blocked...........: avg=16.96µs  min=1.26µs   med=1.49µs   max=156.16µs p(90)=17.17µs  p(95)=86.66µs 
+      http_req_connecting........: avg=10.42µs  min=0s       med=0s       max=104.29µs p(90)=10.42µs  p(95)=57.36µs 
+    ✓ http_req_duration..........: avg=306.98µs min=227.77µs med=272.14µs max=544.02µs p(90)=424.38µs p(95)=484.2µs 
+      http_req_failed............: 0.00%   ✓ 0           ✗ 10
+      http_req_receiving.........: avg=27.74µs  min=20.56µs  med=24.54µs  max=47.91µs  p(90)=39.41µs  p(95)=43.66µs 
+      http_req_sending...........: avg=13.34µs  min=9.36µs   med=10.35µs  max=25.86µs  p(90)=25.31µs  p(95)=25.58µs 
+      http_req_tls_handshaking...: avg=0s       min=0s       med=0s       max=0s       p(90)=0s       p(95)=0s      
+      http_req_waiting...........: avg=265.88µs min=197.53µs med=238.56µs max=479.68µs p(90)=352.1µs  p(95)=415.89µs
+      http_reqs..................: 10      2195.236907/s

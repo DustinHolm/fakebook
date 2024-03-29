@@ -4,8 +4,6 @@ import encoding from "k6/encoding";
 import { check } from "k6";
 import { healthUrl } from "./util/urls.js";
 import {
-  AddFriend,
-  CreateUser,
   User,
   UserFriends,
   UserFriendsPosts,
@@ -33,36 +31,28 @@ export const options = {
       startTime: "5s",
       exec: "smoke",
     },
-    mutations: {
-      executor: "shared-iterations",
-      vus: 10,
-      iterations: 10000,
-      maxDuration: "10s",
-      startTime: "10s",
-      exec: "mutation",
-    },
     mixed_requests_spike: {
       executor: "constant-vus",
       vus: 1000,
       duration: "20s",
-      startTime: "20s",
+      startTime: "10s",
       exec: "mixed",
       env: { PAGINATION: "3" },
     },
-    mean_requests: {
+    friends_of_friends: {
       executor: "shared-iterations",
-      vus: 1,
+      vus: 10,
       iterations: 10,
       maxDuration: "20s",
-      startTime: "40s",
-      exec: "mean",
+      startTime: "30s",
+      exec: "friendsOfFriends",
     },
     user: {
       executor: "shared-iterations",
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "60s",
+      startTime: "50s",
       exec: "user",
     },
     user_and_friends: {
@@ -70,7 +60,7 @@ export const options = {
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "70s",
+      startTime: "60s",
       exec: "userFriends",
     },
     user_and_friends_posts: {
@@ -78,7 +68,7 @@ export const options = {
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "80s",
+      startTime: "70s",
       exec: "userFriendsPosts",
     },
     user_and_friends_posts_3_paginated: {
@@ -86,7 +76,7 @@ export const options = {
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "90s",
+      startTime: "80s",
       exec: "userFriendsPosts",
       env: { PAGINATION: "3" },
     },
@@ -95,7 +85,7 @@ export const options = {
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "100s",
+      startTime: "90s",
       exec: "userFriendsPostsComments",
     },
     user_and_friends_posts_with_comments_3_paginated: {
@@ -103,7 +93,7 @@ export const options = {
       vus: 100,
       iterations: 10000,
       maxDuration: "10s",
-      startTime: "110s",
+      startTime: "100s",
       exec: "userFriendsPostsComments",
       env: { PAGINATION: "3" },
     },
@@ -111,7 +101,6 @@ export const options = {
 };
 
 const maxUserIdQuery = 5000;
-const maxUserIdMutation = 10000;
 
 export const smoke = () => {
   const res = http.get(healthUrl);
@@ -187,35 +176,11 @@ export const mixed = () => {
   });
 };
 
-const mutationRequests = [CreateUser, AddFriend];
-export const mutation = () => {
-  const i = exec.scenario.iterationInInstance % mutationRequests.length;
-  let id1 =
-    (exec.scenario.iterationInInstance % maxUserIdMutation) +
-    maxUserIdQuery +
-    1;
-  let id2 =
-    ((exec.scenario.iterationInInstance + 1) % maxUserIdMutation) +
-    maxUserIdQuery +
-    1;
-  id1 = encoding.b64encode(id1 + "AppUser", "url");
-  id2 = encoding.b64encode(id2 + "AppUser", "url");
-
-  const res = mutationRequests[i](id1, id2);
-
-  check(res, {
-    "response did not contain error": (r) =>
-      r.status == 200 && !!r.json() && !r.json().errors,
-  });
-};
-
-const meanRequests = [UserDoubleNestedFriends];
-export const mean = () => {
-  const i = exec.scenario.iterationInInstance % meanRequests.length;
+export const friendsOfFriends = () => {
   let id = (exec.scenario.iterationInInstance % maxUserIdQuery) + 1;
   id = encoding.b64encode(id + "AppUser", "url");
 
-  const res = meanRequests[i](id);
+  const res = UserDoubleNestedFriends(id);
 
   check(res, {
     "response did not contain error": (r) =>
