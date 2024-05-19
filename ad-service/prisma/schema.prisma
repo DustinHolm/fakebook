@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model Ad {
+  pid Int @id @default(autoincrement())
+  title String
+  details String
+  interactions AdInteraction[]
+}
+
+model AdInteraction {
+  pid Int @id @default(autoincrement())
+  adId Int
+  ad Ad @relation(fields: [adId], references: [pid])
+  interactionType InteractionType
+  time DateTime @default(now())
+}
+
+enum InteractionType {
+  SERVED
+  CLICKED
+}

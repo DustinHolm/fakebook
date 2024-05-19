@@ -1,15 +1,6 @@
 {
-  "sqltools.connections": [
-    {
-      "previewLimit": 50,
-      "server": "localhost",
-      "port": 5432,
-      "driver": "PostgreSQL",
-      "name": "Fakebook",
-      "database": "postgres",
-      "username": "postgres",
-      "password": "postgres"
-    }
-  ],
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
   "rust-analyzer.showUnlinkedFileNotification": false
 }
