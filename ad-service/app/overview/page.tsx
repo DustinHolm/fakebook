@@ -3,6 +3,8 @@ import prisma from "$/lib/prisma";
 import Link from "next/link";
 import { FC } from "react";
 
+export const dynamic = "force-dynamic";
+
 const Page: FC = async () => {
   const ads = await prisma.ad.findMany({
     select: {

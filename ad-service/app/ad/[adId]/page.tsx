@@ -3,6 +3,8 @@ import prisma from "$/lib/prisma";
 import { FC } from "react";
 import InteractionTable from "./InteractionTable";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: { adId: string };
 };

@@ -39,7 +39,22 @@ services:
 
   client:
     build: "./client"
-    ports: ["80:80"]
+    ports: ["3002:80"]
+    profiles: ["full"]
+    pull_policy: "build"
+
+  ad-service:
+    build: "./ad-service"
+    ports: ["3001:3001"]
+    env_file: "./ad-service/.env"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@database:5432/ad-service?schema=public"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://tracer:4318"
+    depends_on:
+      database:
+        condition: "service_healthy"
+      tracer:
+        condition: "service_started"
     profiles: ["full"]
     pull_policy: "build"
 
