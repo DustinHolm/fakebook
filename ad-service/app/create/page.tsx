@@ -1,49 +1,51 @@
-import FormButton from "$/components/FormButton";
-import FormInput from "$/components/FormInput";
-import FormTextArea from "$/components/FormTextArea";
 import Heading from "$/components/Heading";
 import prisma from "$/lib/prisma";
 import { redirect } from "next/navigation";
 import { FC } from "react";
+import CreationForm from "./CreationForm";
+import { z } from "zod";
 
-const Page: FC = async () => {
-  const submit = async (formData: FormData) => {
+const schema = z.object({
+  title: z
+    .string()
+    .min(5, { message: "Title needs to be at least 5 chars." })
+    .max(69, { message: "Title cannot exceed 69 chars." }),
+  details: z
+    .string()
+    .min(5, { message: "Details needs to be at least 5 chars." })
+    .max(420, { message: "Details cannot exceed 420 chars." }),
+});
+
+export type CreationFormErrors = z.inferFlattenedErrors<typeof schema>;
+
+const Page: FC = () => {
+  const submit = async (
+    _: CreationFormErrors,
+    formData: FormData
+  ): Promise<CreationFormErrors> => {
     "use server";
-    const title = formData.get("title")?.toString();
-    const description = formData.get("description")?.toString();
 
-    if (!title || !description) {
-      throw Error("What?! Somebody hacked the frontend and submitted junk!");
-    }
-
-    const ad = await prisma.ad.create({
-      data: {
-        title,
-        details: description,
-      },
+    const data = schema.safeParse({
+      title: formData.get("title"),
+      details: formData.get("details"),
     });
 
-    redirect(`/ad/${ad.pid}`);
+    if (data.success) {
+      const ad = await prisma.ad.create({
+        data: data.data,
+      });
+
+      redirect(`/ad/${ad.pid}`);
+    } else {
+      return data.error.formErrors;
+    }
   };
 
   return (
     <>
       <Heading>Create a new ad</Heading>
 
-      <form action={submit} className="flex flex-col items-end space-y-4">
-        <div className="flex flex-col w-full space-y-8 border-gray-500 border-2 rounded p-8">
-          <FormInput id="title" label="Title" required />
-
-          <FormTextArea
-            id="description"
-            label="Description"
-            rows={3}
-            required
-          />
-        </div>
-
-        <FormButton>Create</FormButton>
-      </form>
+      <CreationForm submit={submit} />
     </>
   );
 };
