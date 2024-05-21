@@ -28,7 +28,6 @@ const CreationForm: FC<Props> = (props) => {
         <FormInput
           id="title"
           label="Title"
-          required
           errors={formState.fieldErrors.title}
         />
 
@@ -36,7 +35,6 @@ const CreationForm: FC<Props> = (props) => {
           id="details"
           label="Details"
           rows={3}
-          required
           errors={formState.fieldErrors.details}
         />
       </div>
