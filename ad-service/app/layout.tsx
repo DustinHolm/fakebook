@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import NavBar from "$/components/NavBar";
+import { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Ad Service",
@@ -8,25 +8,15 @@ export const metadata: Metadata = {
     "Who does not like a nice ad or two? Or three? Or maybe even more?",
 };
 
-const addresses = [
-  { name: "Home", href: "/" },
-  { name: "Browse", href: "/overview" },
-  { name: "Create", href: "/create" },
-];
-
-export default function RootLayout({
+export default function Layout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">
       <body className="bg-white text:black dark:bg-black dark:text-white">
-        <header>
-          <NavBar addresses={addresses} />
-        </header>
-
-        <main className="my-16 mx-auto max-w-screen-lg">{children}</main>
+        {children}
       </body>
     </html>
   );

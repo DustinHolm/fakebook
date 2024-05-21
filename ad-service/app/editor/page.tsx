@@ -9,11 +9,11 @@ const Page: FC = () => {
 
       <p className="text-xl text-center">
         Maybe you would like to{" "}
-        <Link href={"/overview"} className="text-blue-400">
+        <Link href={"/editor/overview"} className="text-blue-400">
           browse own exquisite selection of the worlds finest ads
         </Link>
         . Or maybe you would prefer to{" "}
-        <Link href={"/create"} className="text-blue-400">
+        <Link href={"/editor/create"} className="text-blue-400">
           create your own ad
         </Link>
         ?
