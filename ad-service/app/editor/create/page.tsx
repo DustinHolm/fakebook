@@ -35,7 +35,7 @@ const Page: FC = () => {
         data: data.data,
       });
 
-      redirect(`/ad/${ad.pid}`);
+      redirect(`/editor/ad/${ad.pid}`);
     } else {
       return data.error.formErrors;
     }

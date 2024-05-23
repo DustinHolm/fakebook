@@ -23,7 +23,7 @@ const Page: FC = async () => {
         {ads.map((ad) => (
           <li key={ad.pid}>
             <Link
-              href={`/ad/${ad.pid}`}
+              href={`/editor/ad/${ad.pid}`}
               className="hover:underline hover:decoration-teal-400"
             >
               {ad.title}
