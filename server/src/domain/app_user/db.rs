@@ -1,24 +1,23 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::dataloader::Loader;
-use deadpool_postgres::Pool;
 use tokio_postgres::Row;
 use tracing::{instrument, Level};
 
 use crate::{
-    domain::{db_id::DbId, errors::DbError},
-    infrastructure::db::Saver,
+    domain::db_id::DbId,
+    infrastructure::{db::Repo, DbError},
 };
 
 use super::domain::AppUser;
 
 pub struct AppUserLoader {
-    pool: Pool,
+    repo: Repo,
 }
 
 impl AppUserLoader {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(repo: Repo) -> Self {
+        Self { repo }
     }
 }
 
@@ -28,31 +27,31 @@ impl Loader<DbId> for AppUserLoader {
 
     #[instrument(skip(self), err)]
     async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(|e| Arc::new(e.into()))?;
-
-        let stmt = db
-            .prepare_cached("SELECT * FROM app_user WHERE user_id = ANY ($1)")
+        self.repo
+            .query(
+                "SELECT * FROM app_user WHERE user_id = ANY ($1)",
+                &[&ids],
+                |rows| {
+                    rows.into_iter()
+                        .map(|row| {
+                            let user: AppUser = row.try_into()?;
+                            Ok::<_, DbError>((user.user_id, user))
+                        })
+                        .collect::<Result<HashMap<_, _>, _>>()
+                },
+            )
             .await
-            .map_err(DbError::statement)?;
-
-        let rows = db.query(&stmt, &[&ids]).await.map_err(DbError::statement)?;
-
-        rows.into_iter()
-            .map(|row| {
-                let user: AppUser = row.try_into()?;
-                Ok((user.user_id, user))
-            })
-            .collect()
+            .map_err(Arc::new)
     }
 }
 
 pub struct FriendIdLoader {
-    pool: Pool,
+    repo: Repo,
 }
 
 impl FriendIdLoader {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(repo: Repo) -> Self {
+        Self { repo }
     }
 }
 
@@ -62,10 +61,9 @@ impl Loader<DbId> for FriendIdLoader {
 
     #[instrument(skip(self), err)]
     async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(|e| Arc::new(e.into()))?;
-
-        let stmt = db
-            .prepare_cached(
+        let relations: Vec<(DbId, DbId)> = self
+            .repo
+            .query(
                 r#"
                     SELECT user_id_a, user_id_b
                     FROM user_relation
@@ -75,22 +73,18 @@ impl Loader<DbId> for FriendIdLoader {
                     FROM user_relation
                     WHERE user_id_a = ANY($1)
                 "#,
+                &[&ids],
+                |rows| {
+                    rows.into_iter()
+                        .map(|row| {
+                            let user_id_a = row.try_get(0).map_err(DbError::mapping)?;
+                            let user_id_b = row.try_get(1).map_err(DbError::mapping)?;
+                            Ok::<_, DbError>((user_id_a, user_id_b))
+                        })
+                        .collect()
+                },
             )
-            .await
-            .map_err(DbError::statement)?;
-
-        let relations = db
-            .query(&stmt, &[&ids])
-            .await
-            .map_err(DbError::statement)?
-            .into_iter()
-            .map(|row| {
-                Ok((
-                    row.try_get(0).map_err(DbError::mapping)?,
-                    row.try_get(1).map_err(DbError::mapping)?,
-                ))
-            })
-            .collect::<Result<Vec<(DbId, DbId)>, DbError>>()?;
+            .await?;
 
         let result_map = ids
             .iter()
@@ -116,54 +110,36 @@ impl Loader<DbId> for FriendIdLoader {
     }
 }
 
-impl Saver {
+impl Repo {
     #[instrument(skip(self), err)]
     pub async fn save_user(&self, first_name: &str, last_name: &str) -> Result<AppUser, DbError> {
-        let db = self.pool.get().await?;
-
-        let stmt = db
-            .prepare_cached(
-                r"
-                    INSERT INTO app_user (first_name, last_name)
-                    VALUES ($1, $2)
-                    RETURNING *
-                ",
-            )
-            .await
-            .map_err(DbError::statement)?;
-
-        let row = db
-            .query_one(&stmt, &[&first_name, &last_name])
-            .await
-            .map_err(DbError::statement)?;
-
-        row.try_into()
+        self.query_one(
+            r"
+                INSERT INTO app_user (first_name, last_name)
+                VALUES ($1, $2)
+                RETURNING *
+            ",
+            &[&first_name, &last_name],
+            |row| row.try_into(),
+        )
+        .await
     }
 
     #[instrument(skip(self), err)]
     pub async fn add_friend(&self, user: &DbId, friend: &DbId) -> Result<(), DbError> {
-        let db = self.pool.get().await?;
-
-        let stmt = db
-            .prepare_cached(
-                r"
-                    INSERT INTO user_relation (user_id_a, user_id_b)
-                    VALUES ($1, $2)
-                    ON CONFLICT ON CONSTRAINT user_relation_pkey
-                    DO NOTHING
-                ",
-            )
-            .await
-            .map_err(DbError::statement)?;
-
         let mut users = [user, friend];
         users.sort_unstable();
 
-        db.execute(&stmt, &[&users[0], &users[1]])
-            .await
-            .map_err(DbError::statement)?;
-
-        Ok(())
+        self.execute(
+            r"
+                INSERT INTO user_relation (user_id_a, user_id_b)
+                VALUES ($1, $2)
+                ON CONFLICT ON CONSTRAINT user_relation_pkey
+                DO NOTHING
+            ",
+            &[&users[0], &users[1]],
+        )
+        .await
     }
 }
 

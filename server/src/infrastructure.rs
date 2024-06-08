@@ -6,3 +6,5 @@ pub mod logging;
 pub mod router;
 pub mod schema;
 pub mod shutdown;
+
+pub use errors::DbError;

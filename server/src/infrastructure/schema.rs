@@ -5,13 +5,12 @@ use async_graphql::{
     SchemaBuilder, ServerError, ValidationResult,
 };
 use axum::async_trait;
-use deadpool_postgres::Pool;
 use tracing::debug;
 
 use crate::domain::schema::{RootMutation, RootQuery, RootSubscription};
 
 use super::{
-    db::{Loaders, Saver},
+    db::{Loaders, Repo},
     errors::InfrastructureError,
 };
 
@@ -19,12 +18,11 @@ fn schema_builder() -> SchemaBuilder<RootQuery, RootMutation, RootSubscription> 
     Schema::build(RootQuery, RootMutation, RootSubscription)
 }
 
-pub fn new(saver: Saver, pool: Pool) -> Schema {
+pub fn new(repo: Repo) -> Schema {
     schema_builder()
         // Will get overriden for every request. This is a fallback for subscriptions.
-        .data(Loaders::new(pool.clone()))
-        .data(saver)
-        .data(pool)
+        .data(Loaders::new(repo.clone()))
+        .data(repo)
         .extension(ComplexityExtensionFactory)
         .limit_complexity(1000)
         .finish()

@@ -2,8 +2,9 @@ use std::{future::Future, ops::DerefMut};
 
 use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Config, Pool, Runtime};
+use postgres_types::ToSql;
 use tokio::{spawn, task::JoinHandle};
-use tokio_postgres::NoTls;
+use tokio_postgres::{NoTls, Row};
 use tracing::{instrument, Instrument};
 
 use crate::domain::{
@@ -12,7 +13,7 @@ use crate::domain::{
     post::{PostLoader, PostsOfAuthorLoader},
 };
 
-use super::errors::InfrastructureError;
+use super::errors::{DbError, InfrastructureError};
 
 mod default {
     use refinery::embed_migrations;
@@ -69,6 +70,86 @@ where
     spawn(future.in_current_span())
 }
 
+#[derive(Clone)]
+pub struct Repo {
+    pool: Pool,
+}
+
+impl Repo {
+    pub fn new(pool: Pool) -> Self {
+        Self { pool }
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn query_one<T, Err: Into<DbError>>(
+        &self,
+        statement: &str,
+        params: &[&(dyn ToSql + Sync)],
+        mapper: fn(Row) -> Result<T, Err>,
+    ) -> Result<T, DbError> {
+        let db = self.pool.get().await?;
+
+        let prepared_statement = db
+            .prepare_cached(statement)
+            .await
+            .map_err(DbError::statement)?;
+
+        let row = db
+            .query_one(&prepared_statement, params)
+            .await
+            .map_err(DbError::statement)?;
+
+        mapper(row).map_err(|e| e.into())
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn query<T, Err: Into<DbError>>(
+        &self,
+        statement: &str,
+        params: &[&(dyn ToSql + Sync)],
+        mapper: fn(Vec<Row>) -> Result<T, Err>,
+    ) -> Result<T, DbError> {
+        let db = self.pool.get().await?;
+
+        let prepared_statement = db
+            .prepare_cached(statement)
+            .await
+            .map_err(DbError::statement)?;
+
+        let rows = db
+            .query(&prepared_statement, params)
+            .await
+            .map_err(DbError::statement)?;
+
+        mapper(rows).map_err(|e| e.into())
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn execute(
+        &self,
+        statement: &str,
+        params: &[&(dyn ToSql + Sync)],
+    ) -> Result<(), DbError> {
+        let db = self.pool.get().await?;
+
+        let prepared_statement = db
+            .prepare_cached(statement)
+            .await
+            .map_err(DbError::statement)?;
+
+        db.execute(&prepared_statement, params)
+            .await
+            .map_err(DbError::statement)?;
+
+        Ok(())
+    }
+
+    #[instrument(skip(self), err)]
+    pub(super) async fn health(&self) -> Result<(), DbError> {
+        self.pool.get().await.map(|_| ()).map_err(|e| e.into())
+    }
+}
+
 pub struct Loaders {
     pub app_user: DataLoader<AppUserLoader, HashMapCache>,
     pub friend_id: DataLoader<FriendIdLoader, HashMapCache>,
@@ -79,35 +160,35 @@ pub struct Loaders {
 }
 
 impl Loaders {
-    pub fn new(pool: Pool) -> Self {
+    pub fn new(repo: Repo) -> Self {
         Self {
             app_user: DataLoader::with_cache(
-                AppUserLoader::new(pool.clone()),
+                AppUserLoader::new(repo.clone()),
                 spawn_in_span,
                 HashMapCache::default(),
             ),
             friend_id: DataLoader::with_cache(
-                FriendIdLoader::new(pool.clone()),
+                FriendIdLoader::new(repo.clone()),
                 spawn_in_span,
                 HashMapCache::default(),
             ),
             post: DataLoader::with_cache(
-                PostLoader::new(pool.clone()),
+                PostLoader::new(repo.clone()),
                 spawn_in_span,
                 HashMapCache::default(),
             ),
             posts_of_author: DataLoader::with_cache(
-                PostsOfAuthorLoader::new(pool.clone()),
+                PostsOfAuthorLoader::new(repo.clone()),
                 spawn_in_span,
                 HashMapCache::default(),
             ),
             comment: DataLoader::with_cache(
-                CommentLoader::new(pool.clone()),
+                CommentLoader::new(repo.clone()),
                 spawn_in_span,
                 HashMapCache::default(),
             ),
             comments_of_post: DataLoader::with_cache(
-                CommentsOfPostLoader::new(pool),
+                CommentsOfPostLoader::new(repo),
                 spawn_in_span,
                 HashMapCache::default(),
             ),
@@ -121,15 +202,5 @@ impl Loaders {
         self.posts_of_author.clear();
         self.comment.clear();
         self.comments_of_post.clear();
-    }
-}
-
-pub struct Saver {
-    pub pool: Pool,
-}
-
-impl Saver {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
     }
 }

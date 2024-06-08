@@ -1,25 +1,24 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::dataloader::Loader;
-use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
 use tracing::{instrument, Level};
 
 use crate::{
-    domain::{db_id::DbId, errors::DbError},
-    infrastructure::db::Saver,
+    domain::db_id::DbId,
+    infrastructure::{db::Repo, DbError},
 };
 
 use super::domain::Post;
 
 pub struct PostLoader {
-    pool: Pool,
+    repo: Repo,
 }
 
 impl PostLoader {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(repo: Repo) -> Self {
+        Self { repo }
     }
 }
 
@@ -29,30 +28,31 @@ impl Loader<DbId> for PostLoader {
 
     #[instrument(skip(self), err)]
     async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(|e| Arc::new(e.into()))?;
-        let stmt = db
-            .prepare_cached("SELECT * FROM post WHERE post_id = ANY($1)")
+        self.repo
+            .query(
+                "SELECT * FROM post WHERE post_id = ANY($1)",
+                &[&ids],
+                |rows| {
+                    rows.into_iter()
+                        .map(|row| {
+                            let post: Post = row.try_into()?;
+                            Ok::<_, DbError>((post.post_id, post))
+                        })
+                        .collect::<Result<HashMap<_, _>, _>>()
+                },
+            )
             .await
-            .map_err(DbError::statement)?;
-
-        let rows = db.query(&stmt, &[&ids]).await.map_err(DbError::statement)?;
-
-        rows.into_iter()
-            .map(|row| {
-                let post: Post = row.try_into()?;
-                Ok((post.post_id, post))
-            })
-            .collect()
+            .map_err(|e| e.into())
     }
 }
 
 pub struct PostsOfAuthorLoader {
-    pool: Pool,
+    repo: Repo,
 }
 
 impl PostsOfAuthorLoader {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(repo: Repo) -> Self {
+        Self { repo }
     }
 }
 
@@ -62,19 +62,18 @@ impl Loader<DbId> for PostsOfAuthorLoader {
 
     #[instrument(skip(self), err)]
     async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(|e| Arc::new(e.into()))?;
-
-        let stmt = db
-            .prepare_cached("SELECT * FROM post WHERE author = ANY($1)")
-            .await
-            .map_err(DbError::statement)?;
-
-        let rows = db.query(&stmt, &[&ids]).await.map_err(DbError::statement)?;
+        let posts: Vec<Post> = self
+            .repo
+            .query(
+                "SELECT * FROM post WHERE author = ANY($1)",
+                &[&ids],
+                |rows| rows.into_iter().map(|row| row.try_into()).collect(),
+            )
+            .await?;
 
         let mut result = HashMap::from_iter(ids.iter().map(|id| (*id, Vec::new())));
 
-        for row in rows {
-            let post: Post = row.try_into()?;
+        for post in posts {
             result
                 .entry(post.author)
                 .and_modify(|e: &mut Vec<Post>| e.push(post));
@@ -84,30 +83,21 @@ impl Loader<DbId> for PostsOfAuthorLoader {
     }
 }
 
-impl Saver {
+impl Repo {
     #[instrument(skip(self), err)]
     pub async fn save_post(&self, author_id: &DbId, content: &str) -> Result<Post, DbError> {
-        let db = self.pool.get().await?;
-
         let now = OffsetDateTime::now_utc();
 
-        let stmt = db
-            .prepare_cached(
-                r"
-                    INSERT INTO post (author, created_on, content)
-                    VALUES ($1, $2, $3)
-                    RETURNING *
-                ",
-            )
-            .await
-            .map_err(DbError::statement)?;
-
-        let row = db
-            .query_one(&stmt, &[author_id, &now, &content])
-            .await
-            .map_err(DbError::statement)?;
-
-        row.try_into()
+        self.query_one(
+            r"
+                INSERT INTO post (author, created_on, content)
+                VALUES ($1, $2, $3)
+                RETURNING *
+            ",
+            &[author_id, &now, &content],
+            |row| row.try_into(),
+        )
+        .await
     }
 }
 

@@ -1,20 +1,21 @@
 use deadpool_postgres::Pool;
 
 use super::{
-    db::Saver,
+    db::Repo,
     schema::{self, Schema},
 };
 
 #[derive(Clone)]
 pub struct AppState {
-    pub(super) pool: Pool,
+    pub(super) repo: Repo,
     pub(super) schema: Schema,
 }
 
 impl AppState {
     pub fn new(pool: Pool) -> Self {
-        let schema = schema::new(Saver::new(pool.clone()), pool.clone());
+        let repo = Repo::new(pool);
+        let schema = schema::new(repo.clone());
 
-        Self { pool, schema }
+        Self { repo, schema }
     }
 }

@@ -44,3 +44,29 @@ impl IntoResponse for InfrastructureError {
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     }
 }
+
+#[derive(Debug, Error)]
+pub enum DbError {
+    #[error("Could not connect to db: {0}")]
+    ConnectionFailed(#[source] PoolError),
+    #[error("Could not parse row: {0}")]
+    Mapping(#[source] tokio_postgres::Error),
+    #[error("Could not execute statement: {0}")]
+    Statement(#[source] tokio_postgres::Error),
+}
+
+impl DbError {
+    pub fn mapping(e: tokio_postgres::Error) -> Self {
+        Self::Mapping(e)
+    }
+
+    pub fn statement(e: tokio_postgres::Error) -> Self {
+        Self::Statement(e)
+    }
+}
+
+impl From<PoolError> for DbError {
+    fn from(e: PoolError) -> Self {
+        Self::ConnectionFailed(e)
+    }
+}

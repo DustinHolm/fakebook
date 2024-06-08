@@ -12,7 +12,7 @@ pub async fn graphql_handler(
     State(state): State<AppState>,
     req: GraphQLRequest,
 ) -> GraphQLResponse {
-    let req_with_loaders = req.into_inner().data(Loaders::new(state.pool));
+    let req_with_loaders = req.into_inner().data(Loaders::new(state.repo));
 
     state.schema.execute(req_with_loaders).await.into()
 }
@@ -28,11 +28,9 @@ pub async fn graphiql() -> impl IntoResponse {
 
 #[instrument(skip_all, err)]
 pub async fn health_check(State(state): State<AppState>) -> Result<(), InfrastructureError> {
-    let _ = state
-        .pool
-        .get()
+    state
+        .repo
+        .health()
         .await
-        .map_err(InfrastructureError::health)?;
-
-    Ok(())
+        .map_err(InfrastructureError::health)
 }

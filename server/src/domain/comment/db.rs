@@ -1,25 +1,24 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::dataloader::Loader;
-use deadpool_postgres::Pool;
 use time::OffsetDateTime;
 use tokio_postgres::Row;
 use tracing::{instrument, Level};
 
 use crate::{
-    domain::{db_id::DbId, errors::DbError},
-    infrastructure::db::Saver,
+    domain::db_id::DbId,
+    infrastructure::{db::Repo, DbError},
 };
 
 use super::Comment;
 
 pub struct CommentLoader {
-    pool: Pool,
+    repo: Repo,
 }
 
 impl CommentLoader {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(repo: Repo) -> Self {
+        Self { repo }
     }
 }
 
@@ -29,31 +28,31 @@ impl Loader<DbId> for CommentLoader {
 
     #[instrument(skip(self), err)]
     async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(|e| Arc::new(e.into()))?;
-
-        let stmt = db
-            .prepare_cached("SELECT * FROM comment WHERE comment_id = ANY($1)")
+        self.repo
+            .query(
+                "SELECT * FROM comment WHERE comment_id = ANY($1)",
+                &[&ids],
+                |rows| {
+                    rows.into_iter()
+                        .map(|row| {
+                            let comment: Comment = row.try_into()?;
+                            Ok::<_, DbError>((comment.comment_id, comment))
+                        })
+                        .collect::<Result<HashMap<_, _>, _>>()
+                },
+            )
             .await
-            .map_err(DbError::statement)?;
-
-        let rows = db.query(&stmt, &[&ids]).await.map_err(DbError::statement)?;
-
-        rows.into_iter()
-            .map(|row| {
-                let comment: Comment = row.try_into()?;
-                Ok((comment.comment_id, comment))
-            })
-            .collect()
+            .map_err(|e| e.into())
     }
 }
 
 pub struct CommentsOfPostLoader {
-    pool: Pool,
+    repo: Repo,
 }
 
 impl CommentsOfPostLoader {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(repo: Repo) -> Self {
+        Self { repo }
     }
 }
 
@@ -63,29 +62,28 @@ impl Loader<DbId> for CommentsOfPostLoader {
 
     #[instrument(skip(self), err)]
     async fn load(&self, ids: &[DbId]) -> Result<HashMap<DbId, Self::Value>, Self::Error> {
-        let db = self.pool.get().await.map_err(|e| Arc::new(e.into()))?;
-
-        let stmt = db
-            .prepare_cached("SELECT * FROM comment WHERE referenced_post = ANY($1)")
-            .await
-            .map_err(DbError::statement)?;
-
-        let rows = db.query(&stmt, &[&ids]).await.map_err(DbError::statement)?;
+        let comments: Vec<Comment> = self
+            .repo
+            .query(
+                "SELECT * FROM comment WHERE referenced_post = ANY($1)",
+                &[&ids],
+                |rows| rows.into_iter().map(|row| row.try_into()).collect(),
+            )
+            .await?;
 
         let mut result = HashMap::from_iter(ids.iter().map(|id| (*id, Vec::new())));
 
-        for row in rows {
-            let comment: Comment = row.try_into()?;
+        for comment in comments {
             result
                 .entry(comment.referenced_post)
-                .and_modify(|e: &mut Vec<Comment>| e.push(comment));
+                .and_modify(|old| old.push(comment));
         }
 
         Ok(result)
     }
 }
 
-impl Saver {
+impl Repo {
     #[instrument(skip(self), err)]
     pub async fn save_comment(
         &self,
@@ -93,27 +91,18 @@ impl Saver {
         referenced_post_id: &DbId,
         content: &str,
     ) -> Result<Comment, DbError> {
-        let db = self.pool.get().await?;
-
         let now = OffsetDateTime::now_utc();
 
-        let stmt = db
-            .prepare_cached(
-                r"
-                    INSERT INTO comment (author, created_on, content, referenced_post)
-                    VALUES ($1, $2, $3, $4)
-                    RETURNING *
-                ",
-            )
-            .await
-            .map_err(DbError::statement)?;
-
-        let row = db
-            .query_one(&stmt, &[&author_id, &now, &content, &referenced_post_id])
-            .await
-            .map_err(DbError::statement)?;
-
-        row.try_into()
+        self.query_one(
+            r"
+                INSERT INTO comment (author, created_on, content, referenced_post)
+                VALUES ($1, $2, $3, $4)
+                RETURNING *
+            ",
+            &[&author_id, &now, &content, &referenced_post_id],
+            |row| row.try_into(),
+        )
+        .await
     }
 }
 

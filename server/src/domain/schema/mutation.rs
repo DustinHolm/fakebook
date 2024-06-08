@@ -13,7 +13,7 @@ use crate::{
         post::{Post, PostInput},
         relay_meta::AppCursor,
     },
-    infrastructure::db::{Loaders, Saver},
+    infrastructure::db::{Loaders, Repo},
 };
 
 pub struct RootMutation;
@@ -26,10 +26,9 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: AppUserInput,
     ) -> Result<AppUser, GqlError> {
-        let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
 
-        saver
-            .save_user(&input.first_name, &input.last_name)
+        repo.save_user(&input.first_name, &input.last_name)
             .await
             .map_err(|_| GqlError::DbSave)
     }
@@ -40,7 +39,7 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: AddFriendInput,
     ) -> Result<AppUser, GqlError> {
-        let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
         let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
 
         let user_id = DbId::from(1); // Placeholder until we have auth
@@ -63,8 +62,7 @@ impl RootMutation {
             )
         })?;
 
-        saver
-            .add_friend(&user_id, &friend_id)
+        repo.add_friend(&user_id, &friend_id)
             .await
             .map_err(|_| GqlError::DbSave)?;
 
@@ -77,11 +75,11 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: PostInput,
     ) -> Result<Edge<AppCursor, Post, EmptyFields>, GqlError> {
-        let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
 
         let author = DbId::from(1); // Placeholder until we have auth
 
-        let saved = saver
+        let saved = repo
             .save_post(&author, &input.content)
             .await
             .map_err(|_| GqlError::DbSave)?;
@@ -95,14 +93,14 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: CommentInput,
     ) -> Result<Edge<AppCursor, Comment, EmptyFields>, GqlError> {
-        let saver = ctx.data::<Saver>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
 
         let author_id = DbId::from(1); // Placeholder until we have auth
 
         let referenced_post_id = Post::decode(&input.referenced_post)
             .map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
 
-        let saved = saver
+        let saved = repo
             .save_comment(&author_id, &referenced_post_id, &input.content)
             .await
             .map_err(|_| GqlError::DbSave)?;
