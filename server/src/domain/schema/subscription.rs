@@ -66,8 +66,9 @@ impl RootSubscription {
 
                     last_seen = OffsetDateTime::now_utc();
                     let _ = ctx.data::<Loaders>().map(|loaders| loaders.clear_caches());
-                    interval.tick().await;
                 };
+
+                interval.tick().await;
             }
         });
 
@@ -121,7 +122,7 @@ impl RootSubscription {
                 let posts: Result<Vec<Edge<AppCursor, Post, EmptyFields>>, DbError> = repo
                     .query(
                         "SELECT * FROM post WHERE author = ANY($1) AND created_on > $2",
-                        &[&user_id, &last_seen],
+                        &[&author_ids, &last_seen],
                         |rows| {
                             rows.into_iter()
                                 .map(|row| {
@@ -140,8 +141,9 @@ impl RootSubscription {
 
                     last_seen = OffsetDateTime::now_utc();
                     let _ = ctx.data::<Loaders>().map(|loaders| loaders.clear_caches());
-                    interval.tick().await;
                 };
+
+                interval.tick().await;
             }
         });
 

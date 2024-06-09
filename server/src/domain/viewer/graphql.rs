@@ -1,5 +1,3 @@
-use std::cmp::Reverse;
-
 use crate::domain::{db_id::DbId, errors::GqlError, relay_meta::paginate};
 use crate::{
     domain::{post::Post, relay_meta::AppConnection, viewer::Viewer},
