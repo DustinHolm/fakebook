@@ -10,8 +10,8 @@ use crate::infrastructure::{app_state::AppState, db, logging, router, schema, sh
 #[tokio::main]
 async fn main() {
     schema::save_schema("./schema.graphql").expect("Should have written schema to file");
-    let _ = dotenv::dotenv(); // If .env is not found, ENV might be configured already
-    let addr = dotenv::var("HOSTING_ADDRESS").expect("Need to know where to bind app");
+    let _ = dotenvy::dotenv(); // If .env is not found, ENV might be configured already
+    let addr = dotenvy::var("HOSTING_ADDRESS").expect("Need to know where to bind app");
 
     let _guard = logging::init().expect("Logging should build"); // Guard flushes when main/server stops
 

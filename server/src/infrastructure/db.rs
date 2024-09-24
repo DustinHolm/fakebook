@@ -2,13 +2,10 @@ use std::{future::Future, ops::DerefMut};
 
 use async_graphql::dataloader::{DataLoader, HashMapCache};
 use deadpool_postgres::{Manager, ManagerConfig, Pool};
-use futures::StreamExt;
 use postgres_types::ToSql;
 use tokio::{spawn, task::JoinHandle};
-use tokio_postgres::{
-    tls::NoTlsStream, AsyncMessage, Client, Config, Connection, NoTls, Row, Socket,
-};
-use tracing::{debug, instrument, warn, Instrument};
+use tokio_postgres::{tls::NoTlsStream, Client, Config, Connection, NoTls, Row, Socket};
+use tracing::{instrument, Instrument};
 
 use crate::domain::{
     app_user::{AppUserLoader, FriendIdLoader},
@@ -32,14 +29,14 @@ mod debug {
 
 #[instrument(skip_all, err)]
 pub async fn initiate_repo() -> Result<Repo, InfrastructureError> {
-    let host = dotenv::var("PG_HOST")?;
-    let port = dotenv::var("PG_PORT")?;
+    let host = dotenvy::var("PG_HOST")?;
+    let port = dotenvy::var("PG_PORT")?;
     let port = port
         .parse()
         .map_err(|_| InfrastructureError::env_invalid(format!("Invalid port: {port}")))?;
-    let dbname = dotenv::var("PG_DBNAME")?;
-    let user = dotenv::var("PG_USER")?;
-    let password = dotenv::var("PG_PASSWORD")?;
+    let dbname = dotenvy::var("PG_DBNAME")?;
+    let user = dotenvy::var("PG_USER")?;
+    let password = dotenvy::var("PG_PASSWORD")?;
 
     let mut config = Config::new();
     config.host(&host);

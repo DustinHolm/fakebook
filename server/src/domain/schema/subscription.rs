@@ -20,7 +20,7 @@ use crate::{
     },
     infrastructure::{
         db::{Loaders, Repo},
-        notification_center::{self, ListenerTopic, Notification, NotificationCenter},
+        notification_center::{ListenerTopic, Notification, NotificationCenter},
         DbError,
     },
 };

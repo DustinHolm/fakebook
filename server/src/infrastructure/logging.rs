@@ -1,4 +1,5 @@
 use hyper::Request;
+use opentelemetry::{global, trace::TracerProvider};
 #[cfg(feature = "otel")]
 use opentelemetry_sdk::runtime;
 use tower_http::trace::MakeSpan;
@@ -24,7 +25,7 @@ pub fn init() -> Result<WorkerGuard, InfrastructureError> {
 
     #[cfg(feature = "otel")]
     registry
-        .with(tracing_opentelemetry::layer().with_tracer(tracing))
+        .with(tracing_opentelemetry::layer().with_tracer(tracing.tracer("fakebook-server")))
         .init();
 
     #[cfg(not(feature = "otel"))]

@@ -12,7 +12,7 @@ pub enum InfrastructureError {
     #[error("Db failed on startup: {0}")]
     DbStartup(#[from] BuildError),
     #[error("Env had missing values: {0}")]
-    Env(#[from] dotenv::Error),
+    Env(#[from] dotenvy::Error),
     #[error("Env had invalid values: {0}")]
     EnvInvalid(String),
     #[error("Filesystem did not cooperate: {0}")]

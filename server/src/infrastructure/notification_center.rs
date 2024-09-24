@@ -61,7 +61,8 @@ impl NotificationCenter {
             .as_ref()
             .unwrap()
             .send(NotificationCenterDaemonCommand::AddListener(listener))
-            .await;
+            .await
+            .unwrap();
 
         ListenerHandle::new(rx)
     }
@@ -125,7 +126,8 @@ impl NotificationCenterDaemon {
                         .send(NotificationCenterDaemonCommand::HandleNotification(
                             notification,
                         ))
-                        .await;
+                        .await
+                        .unwrap();
                 } else {
                     warn!("Received malformed db message");
                 }
@@ -166,7 +168,8 @@ impl NotificationCenterDaemon {
                     .tx
                     .send(notification.clone())
                     .await
-                    .inspect_err(|e| debug!("{:?}", e));
+                    .inspect_err(|e| debug!("{:?}", e))
+                    .unwrap();
             }
         }
     }
