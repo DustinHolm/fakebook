@@ -1,7 +1,10 @@
 use async_graphql::{NewType, ID};
 use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 use postgres_types::{FromSql, ToSql};
-use std::{ops::Deref, str::from_utf8};
+use std::{
+    ops::Deref,
+    str::{from_utf8, FromStr},
+};
 
 use super::errors::MappingError;
 
@@ -14,6 +17,14 @@ impl Deref for DbId {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl FromStr for DbId {
+    type Err = core::num::ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        i32::from_str(s).map(DbId::from)
     }
 }
 

@@ -1,7 +1,6 @@
-use deadpool_postgres::Pool;
-
 use super::{
     db::Repo,
+    notification_center::NotificationCenter,
     schema::{self, Schema},
 };
 
@@ -12,9 +11,8 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(pool: Pool) -> Self {
-        let repo = Repo::new(pool);
-        let schema = schema::new(repo.clone());
+    pub fn new(notification_center: NotificationCenter, repo: Repo) -> Self {
+        let schema = schema::new(repo.clone(), notification_center);
 
         Self { repo, schema }
     }

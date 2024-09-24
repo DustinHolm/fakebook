@@ -12,16 +12,18 @@ use crate::domain::schema::{RootMutation, RootQuery, RootSubscription};
 use super::{
     db::{Loaders, Repo},
     errors::InfrastructureError,
+    notification_center::NotificationCenter,
 };
 
 fn schema_builder() -> SchemaBuilder<RootQuery, RootMutation, RootSubscription> {
     Schema::build(RootQuery, RootMutation, RootSubscription)
 }
 
-pub fn new(repo: Repo) -> Schema {
+pub fn new(repo: Repo, notification_center: NotificationCenter) -> Schema {
     schema_builder()
         // Will get overriden for every request. This is a fallback for subscriptions.
         .data(Loaders::new(repo.clone()))
+        .data(notification_center)
         .data(repo)
         .extension(ComplexityExtensionFactory)
         .limit_complexity(1000)

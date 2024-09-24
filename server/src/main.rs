@@ -2,6 +2,7 @@ mod domain;
 mod infrastructure;
 
 use axum::serve;
+use infrastructure::notification_center::NotificationCenter;
 use tokio::net::TcpListener;
 
 use crate::infrastructure::{app_state::AppState, db, logging, router, schema, shutdown};
@@ -14,10 +15,15 @@ async fn main() {
 
     let _guard = logging::init().expect("Logging should build"); // Guard flushes when main/server stops
 
-    let pool = db::create_pool().expect("Pool should have been created");
-    db::migrate(&pool).await.expect("Migrations should succeed");
+    let repo = db::initiate_repo()
+        .await
+        .expect("Repo should have been created");
+    db::migrate(&repo).await.expect("Migrations should succeed");
 
-    let app_state = AppState::new(pool);
+    let mut notification_center = NotificationCenter::new(repo.clone());
+    notification_center.start_daemon().await;
+
+    let app_state = AppState::new(notification_center, repo);
     let router = router::new(app_state);
 
     let listener = TcpListener::bind(&addr)

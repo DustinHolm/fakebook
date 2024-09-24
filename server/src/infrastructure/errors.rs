@@ -1,14 +1,16 @@
 use axum::response::{IntoResponse, Response};
-use deadpool_postgres::{CreatePoolError, PoolError};
+use deadpool_postgres::{BuildError, PoolError};
 use hyper::StatusCode;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum InfrastructureError {
-    #[error("Db failed on initial connection: {0}")]
-    DbConnection(#[from] PoolError),
+    #[error("Db failed on pool connection: {0}")]
+    DbPoolConnection(#[from] PoolError),
+    #[error("Db failed on separate connection: {0}")]
+    DbExplicitConnection(#[from] tokio_postgres::Error),
     #[error("Db failed on startup: {0}")]
-    DbStartup(#[from] CreatePoolError),
+    DbStartup(#[from] BuildError),
     #[error("Env had missing values: {0}")]
     Env(#[from] dotenv::Error),
     #[error("Env had invalid values: {0}")]

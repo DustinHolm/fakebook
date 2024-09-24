@@ -1,11 +1,14 @@
 use std::{future::Future, ops::DerefMut};
 
 use async_graphql::dataloader::{DataLoader, HashMapCache};
-use deadpool_postgres::{Config, Pool, Runtime};
+use deadpool_postgres::{Manager, ManagerConfig, Pool};
+use futures::StreamExt;
 use postgres_types::ToSql;
 use tokio::{spawn, task::JoinHandle};
-use tokio_postgres::{NoTls, Row};
-use tracing::{instrument, Instrument};
+use tokio_postgres::{
+    tls::NoTlsStream, AsyncMessage, Client, Config, Connection, NoTls, Row, Socket,
+};
+use tracing::{debug, instrument, warn, Instrument};
 
 use crate::domain::{
     app_user::{AppUserLoader, FriendIdLoader},
@@ -28,26 +31,35 @@ mod debug {
 }
 
 #[instrument(skip_all, err)]
-pub fn create_pool() -> Result<Pool, InfrastructureError> {
-    let mut config = Config::new();
+pub async fn initiate_repo() -> Result<Repo, InfrastructureError> {
+    let host = dotenv::var("PG_HOST")?;
     let port = dotenv::var("PG_PORT")?;
-    config.host = Some(dotenv::var("PG_HOST")?);
-    config.port = Some(
-        port.parse()
-            .map_err(|_| InfrastructureError::env_invalid(format!("Invalid port: {port}")))?,
-    );
-    config.dbname = Some(dotenv::var("PG_DBNAME")?);
-    config.user = Some(dotenv::var("PG_USER")?);
-    config.password = Some(dotenv::var("PG_PASSWORD")?);
+    let port = port
+        .parse()
+        .map_err(|_| InfrastructureError::env_invalid(format!("Invalid port: {port}")))?;
+    let dbname = dotenv::var("PG_DBNAME")?;
+    let user = dotenv::var("PG_USER")?;
+    let password = dotenv::var("PG_PASSWORD")?;
 
-    let pool = config.create_pool(Some(Runtime::Tokio1), NoTls)?;
+    let mut config = Config::new();
+    config.host(&host);
+    config.port(port);
+    config.dbname(&dbname);
+    config.user(&user);
+    config.password(&password);
 
-    Ok(pool)
+    let manager = Manager::from_config(config.clone(), NoTls, ManagerConfig::default());
+
+    let pool = Pool::builder(manager).build()?;
+
+    let repo = Repo::new(pool, config);
+
+    Ok(repo)
 }
 
 #[instrument(skip_all, err)]
-pub async fn migrate(pool: &Pool) -> Result<(), InfrastructureError> {
-    let mut db = pool.get().await?;
+pub async fn migrate(repo: &Repo) -> Result<(), InfrastructureError> {
+    let mut db = repo.pool.get().await?;
 
     default::migrations::runner()
         .set_abort_missing(false)
@@ -73,11 +85,21 @@ where
 #[derive(Clone)]
 pub struct Repo {
     pool: Pool,
+    config: Config,
 }
 
 impl Repo {
-    pub fn new(pool: Pool) -> Self {
-        Self { pool }
+    pub fn new(pool: Pool, config: Config) -> Self {
+        Self { pool, config }
+    }
+
+    pub(super) async fn new_connection(
+        &self,
+    ) -> Result<(Client, Connection<Socket, NoTlsStream>), InfrastructureError> {
+        self.config
+            .connect(NoTls)
+            .await
+            .map_err(|e| InfrastructureError::DbExplicitConnection(e))
     }
 
     #[instrument(skip(self), err)]

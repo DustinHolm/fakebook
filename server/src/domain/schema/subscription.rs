@@ -20,6 +20,7 @@ use crate::{
     },
     infrastructure::{
         db::{Loaders, Repo},
+        notification_center::{self, ListenerTopic, Notification, NotificationCenter},
         DbError,
     },
 };
@@ -81,6 +82,9 @@ impl RootSubscription {
         ctx: &'a Context<'a>,
     ) -> Result<impl Stream<Item = Vec<Edge<AppCursor, Post, EmptyFields>>> + 'a, GqlError> {
         let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
+        let notification_center = ctx
+            .data::<NotificationCenter>()
+            .map_err(|_| GqlError::InternalData)?;
 
         let user_id = DbId::from(1); // Placeholder until we have auth
 
@@ -114,15 +118,29 @@ impl RootSubscription {
         let mut author_ids = friend_ids;
         author_ids.push(user_id);
 
-        let mut interval = interval(Duration::from_secs(10));
-        let mut last_seen = OffsetDateTime::now_utc();
+        let topics = author_ids
+            .into_iter()
+            .map(|id| ListenerTopic::User(id))
+            .collect();
+        let mut handle = notification_center.subscribe(topics).await;
 
         let stream = stream!({
-            loop {
+            while let Some(notifications) = handle.receive().await {
+                let post_ids: Vec<DbId> = notifications
+                    .into_iter()
+                    .filter_map(|n| {
+                        if let Notification::Post(post) = n {
+                            Some(post.post_id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
                 let posts: Result<Vec<Edge<AppCursor, Post, EmptyFields>>, DbError> = repo
                     .query(
-                        "SELECT * FROM post WHERE author = ANY($1) AND created_on > $2",
-                        &[&author_ids, &last_seen],
+                        "SELECT * FROM post WHERE post_id = ANY($1)",
+                        &[&post_ids],
                         |rows| {
                             rows.into_iter()
                                 .map(|row| {
@@ -139,11 +157,8 @@ impl RootSubscription {
                         yield posts;
                     }
 
-                    last_seen = OffsetDateTime::now_utc();
                     let _ = ctx.data::<Loaders>().map(|loaders| loaders.clear_caches());
                 };
-
-                interval.tick().await;
             }
         });
 
