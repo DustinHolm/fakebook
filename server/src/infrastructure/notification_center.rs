@@ -1,18 +1,9 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::time::Duration;
 
 use futures::StreamExt;
-use tokio::{
-    spawn,
-    sync::{mpsc, oneshot},
-    time::sleep,
-};
+use tokio::{spawn, sync::mpsc, time::sleep};
 use tokio_postgres::AsyncMessage;
 use tracing::{debug, warn};
-use uuid::Uuid;
 
 use crate::domain::db_id::DbId;
 

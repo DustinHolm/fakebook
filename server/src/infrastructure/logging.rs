@@ -1,7 +1,5 @@
 use hyper::Request;
-use opentelemetry::{global, trace::TracerProvider};
-#[cfg(feature = "otel")]
-use opentelemetry_sdk::runtime;
+use opentelemetry::trace::TracerProvider;
 use tower_http::trace::MakeSpan;
 use tracing::{span, Level, Span};
 use tracing_appender::non_blocking::WorkerGuard;
@@ -11,11 +9,16 @@ use super::errors::InfrastructureError;
 
 pub fn init() -> Result<WorkerGuard, InfrastructureError> {
     #[cfg(feature = "otel")]
-    let tracing = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
-        .install_batch(runtime::Tokio)
+    let exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .build()
         .map_err(|e| InfrastructureError::Logging(Box::new(e)))?;
+
+    #[cfg(feature = "otel")]
+    let tracer = opentelemetry_sdk::trace::TracerProvider::builder()
+        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio)
+        .build()
+        .tracer("fakebook-server");
 
     let (non_blocking_writer, guard) = tracing_appender::non_blocking(std::io::stdout());
 
@@ -25,7 +28,7 @@ pub fn init() -> Result<WorkerGuard, InfrastructureError> {
 
     #[cfg(feature = "otel")]
     registry
-        .with(tracing_opentelemetry::layer().with_tracer(tracing.tracer("fakebook-server")))
+        .with(tracing_opentelemetry::layer().with_tracer(tracer))
         .init();
 
     #[cfg(not(feature = "otel"))]

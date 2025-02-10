@@ -4,7 +4,7 @@ use async_graphql::{
     extensions::{Extension, ExtensionContext, ExtensionFactory, NextValidation},
     SchemaBuilder, ServerError, ValidationResult,
 };
-use axum::async_trait;
+use async_trait::async_trait;
 use tracing::debug;
 
 use crate::domain::schema::{RootMutation, RootQuery, RootSubscription};
