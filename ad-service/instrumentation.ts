@@ -9,11 +9,17 @@ import { Resource } from "@opentelemetry/resources";
 export function register() {
   const provider = new NodeTracerProvider({
     resource: new Resource({
-      [SEMRESATTRS_SERVICE_NAME]: "ad-service",
+      [SEMRESATTRS_SERVICE_NAME]: process.env["TRACING_SERVICE_NAME"],
     }),
   });
 
-  provider.addSpanProcessor(new BatchSpanProcessor(new OTLPTraceExporter()));
+  provider.addSpanProcessor(
+    new BatchSpanProcessor(
+      new OTLPTraceExporter({
+        url: process.env["TRACING_TRACE_URL"],
+      })
+    )
+  );
 
   registerInstrumentations({
     tracerProvider: provider,

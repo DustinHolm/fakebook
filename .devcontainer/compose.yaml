@@ -19,7 +19,7 @@ services:
     volumes: ["database-volume:/var/lib/postgresql/data"]
 
   tracer:
-    image: "quay.io/jaegertracing/all-in-one:latest"
+    image: "quay.io/jaegertracing/jaeger:latest"
     ports: ["16686:16686", "4317:4317", "4318:4318"]
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
