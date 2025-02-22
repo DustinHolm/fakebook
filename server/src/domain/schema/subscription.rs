@@ -122,7 +122,11 @@ impl RootSubscription {
             .into_iter()
             .map(|id| ListenerTopic::User(id))
             .collect();
-        let mut handle = notification_center.subscribe(topics).await;
+
+        let mut handle = notification_center.subscribe(topics).await.map_err(|e| {
+            error!(message = e.to_string());
+            GqlError::InternalData
+        })?;
 
         let stream = stream!({
             while let Some(notifications) = handle.receive().await {

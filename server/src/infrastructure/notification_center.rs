@@ -3,11 +3,11 @@ use std::time::Duration;
 use futures::StreamExt;
 use tokio::{spawn, sync::mpsc, time::sleep};
 use tokio_postgres::AsyncMessage;
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 
 use crate::domain::db_id::DbId;
 
-use super::db::Repo;
+use super::{db::Repo, errors::NotificationCenterError};
 
 #[derive(Clone)]
 pub struct NotificationCenter {
@@ -23,39 +23,48 @@ impl NotificationCenter {
         }
     }
 
-    pub async fn start_daemon(&mut self) {
+    pub async fn start_daemon(&mut self) -> Result<(), NotificationCenterError> {
         let (tx, rx) = mpsc::channel::<NotificationCenterDaemonCommand>(32);
         let maintainence_tx = tx.clone();
         self.daemon_tx = Some(tx.clone());
         let repo = self.repo.clone();
+        let mut daemon = NotificationCenterDaemon::new(tx, rx);
+
+        daemon.start_repo_listener(repo).await?;
+
         spawn(async move {
-            let mut daemon = NotificationCenterDaemon::new(tx, rx);
-            daemon.start_repo_listener(repo).await;
             daemon.listen().await;
-            debug!("stop");
+            debug!("Notification daemon shut down");
         });
+
         spawn(async move {
             loop {
                 sleep(Duration::from_secs(10)).await;
-                maintainence_tx
+                let _ = maintainence_tx
                     .send(NotificationCenterDaemonCommand::Maintainance)
-                    .await;
+                    .await
+                    .inspect_err(|e| error!("Could not send the maintainance notification {}", e));
             }
         });
+
+        Ok(())
     }
 
-    pub async fn subscribe(&self, topics: Vec<ListenerTopic>) -> ListenerHandle {
+    pub async fn subscribe(
+        &self,
+        topics: Vec<ListenerTopic>,
+    ) -> Result<ListenerHandle, NotificationCenterError> {
         let (tx, rx) = tokio::sync::mpsc::channel::<Notification>(16);
         let listener = Listener { topics, tx };
 
         self.daemon_tx
             .as_ref()
-            .unwrap()
+            .ok_or(NotificationCenterError::SubscriptionFailed)?
             .send(NotificationCenterDaemonCommand::AddListener(listener))
             .await
-            .unwrap();
+            .map_err(|e| NotificationCenterError::DaemonDead(e.to_string()))?;
 
-        ListenerHandle::new(rx)
+        Ok(ListenerHandle::new(rx))
     }
 }
 
@@ -84,8 +93,11 @@ impl NotificationCenterDaemon {
         }
     }
 
-    async fn start_repo_listener(&self, repo: Repo) {
-        let (client, mut connection) = repo.new_connection().await.unwrap();
+    async fn start_repo_listener(&self, repo: Repo) -> Result<(), NotificationCenterError> {
+        let (client, mut connection) = repo
+            .new_connection()
+            .await
+            .map_err(|e| NotificationCenterError::DaemonFailedToStart(e.to_string()))?;
 
         let (tx, mut rx) = futures::channel::mpsc::channel::<AsyncMessage>(64);
 
@@ -94,46 +106,45 @@ impl NotificationCenterDaemon {
         })
         .forward(tx);
 
+        client
+            .batch_execute(
+                r"
+                LISTEN post_notification;
+                LISTEN comment_notification;
+            ",
+            )
+            .await
+            .map_err(|e| NotificationCenterError::DaemonFailedToStart(e.to_string()))?;
+
         spawn(stream);
 
         let daemon_tx = self.tx.clone();
 
         spawn(async move {
-            client
-                .batch_execute(
-                    r"
-                        LISTEN post_notification;
-                        LISTEN comment_notification;
-                    ",
-                )
-                .await
-                .unwrap();
-
             debug!("Started listener");
 
             while let Some(AsyncMessage::Notification(msg)) = rx.next().await {
                 if let Ok(notification) = Notification::try_from(msg) {
-                    daemon_tx
+                    let _ = daemon_tx
                         .send(NotificationCenterDaemonCommand::HandleNotification(
                             notification,
                         ))
                         .await
-                        .unwrap();
+                        .inspect_err(|e| warn!("Failed to send notification: {}", e));
                 } else {
                     warn!("Received malformed db message");
                 }
             }
 
-            // TODO: Restart after x seconds
             debug!("Stopped listener");
         });
+
+        Ok(())
     }
 
     async fn listen(&mut self) {
         while let Some(message) = self.rx.recv().await {
             use NotificationCenterDaemonCommand::*;
-
-            debug!("Whoa notification: {:?}", message.clone());
 
             match message {
                 AddListener(listener) => self.add_listener(listener),
@@ -154,13 +165,11 @@ impl NotificationCenterDaemon {
     async fn handle_notification(&self, notification: Notification) {
         for listener in &self.listeners {
             if listener.cares_about(&notification) {
-                debug!("Hey i care");
-                listener
+                let _ = listener
                     .tx
                     .send(notification.clone())
                     .await
-                    .inspect_err(|e| debug!("{:?}", e))
-                    .unwrap();
+                    .inspect_err(|e| debug!("Could not inform listener: {}", e));
             }
         }
     }
@@ -189,6 +198,7 @@ impl ListenerHandle {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum ListenerTopic {
     User(DbId),
@@ -226,8 +236,6 @@ impl Listener {
     }
 }
 
-pub struct NotificationError;
-
 #[derive(Debug, Clone)]
 pub struct PostNotification {
     pub author_id: DbId,
@@ -235,40 +243,51 @@ pub struct PostNotification {
 }
 
 impl TryFrom<&str> for PostNotification {
-    type Error = NotificationError;
+    type Error = NotificationCenterError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let parts: Vec<&str> = value.split(':').collect();
         if parts.len() != 2 {
-            return Err(NotificationError);
+            return Err(NotificationCenterError::ParsingFailed);
         }
 
-        let post_id = parts[0].parse().map_err(|_| NotificationError)?;
-        let author_id = parts[1].parse().map_err(|_| NotificationError)?;
+        let post_id = parts[0]
+            .parse()
+            .map_err(|_| NotificationCenterError::ParsingFailed)?;
+        let author_id = parts[1]
+            .parse()
+            .map_err(|_| NotificationCenterError::ParsingFailed)?;
 
         Ok(PostNotification { author_id, post_id })
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
-struct CommentNotification {
-    author_id: DbId,
-    post_id: DbId,
-    comment_id: DbId,
+pub struct CommentNotification {
+    pub author_id: DbId,
+    pub post_id: DbId,
+    pub comment_id: DbId,
 }
 
 impl TryFrom<&str> for CommentNotification {
-    type Error = NotificationError;
+    type Error = NotificationCenterError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let parts: Vec<&str> = value.split(':').collect();
         if parts.len() != 3 {
-            return Err(NotificationError);
+            return Err(NotificationCenterError::ParsingFailed);
         }
 
-        let comment_id = parts[0].parse().map_err(|_| NotificationError)?;
-        let post_id = parts[1].parse().map_err(|_| NotificationError)?;
-        let author_id = parts[2].parse().map_err(|_| NotificationError)?;
+        let comment_id = parts[0]
+            .parse()
+            .map_err(|_| NotificationCenterError::ParsingFailed)?;
+        let post_id = parts[1]
+            .parse()
+            .map_err(|_| NotificationCenterError::ParsingFailed)?;
+        let author_id = parts[2]
+            .parse()
+            .map_err(|_| NotificationCenterError::ParsingFailed)?;
 
         Ok(CommentNotification {
             author_id,
@@ -285,7 +304,7 @@ pub enum Notification {
 }
 
 impl TryFrom<tokio_postgres::Notification> for Notification {
-    type Error = NotificationError;
+    type Error = NotificationCenterError;
 
     fn try_from(value: tokio_postgres::Notification) -> Result<Self, Self::Error> {
         match value.channel() {
@@ -293,7 +312,7 @@ impl TryFrom<tokio_postgres::Notification> for Notification {
                 .map(|notification| Notification::Post(notification)),
             "comment_notification" => CommentNotification::try_from(value.payload())
                 .map(|notification| Notification::Comment(notification)),
-            _ => Err(NotificationError),
+            _ => Err(NotificationCenterError::ParsingFailed),
         }
     }
 }

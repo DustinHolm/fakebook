@@ -72,3 +72,15 @@ impl From<PoolError> for DbError {
         Self::ConnectionFailed(e)
     }
 }
+
+#[derive(Debug, Error)]
+pub enum NotificationCenterError {
+    #[error("The daemon failed to start: {0}")]
+    DaemonFailedToStart(String),
+    #[error("The daemon seems to be dead: {0}")]
+    DaemonDead(String),
+    #[error("Failed to subscribe to a topic")]
+    SubscriptionFailed,
+    #[error("Failed to parse Notification")]
+    ParsingFailed,
+}

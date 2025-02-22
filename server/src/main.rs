@@ -21,7 +21,10 @@ async fn main() {
     db::migrate(&repo).await.expect("Migrations should succeed");
 
     let mut notification_center = NotificationCenter::new(repo.clone());
-    notification_center.start_daemon().await;
+    notification_center
+        .start_daemon()
+        .await
+        .expect("NotificationCenter should have started");
 
     let app_state = AppState::new(notification_center, repo);
     let router = router::new(app_state);
