@@ -11,7 +11,7 @@ export function usePreloadedRoute<T extends OperationType>(
   query: GraphQLTaggedNode
 ) {
   const navigation = useNavigation();
-  const data = useLoaderData() as PreloadedQuery<T>;
+  const data: PreloadedQuery<T> = useLoaderData();
 
   useEffect(
     () => () => {

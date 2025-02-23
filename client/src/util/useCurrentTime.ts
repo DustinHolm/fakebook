@@ -12,7 +12,7 @@ function getTimeout(precision: CurrentTimePrecision): number {
 
 export function useCurrentTime(precision: CurrentTimePrecision) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const timer = useRef<number>();
+  const timer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     timer.current = window.setInterval(() => {

@@ -6,6 +6,7 @@ import {
   FetchFunction,
   SubscribeFunction,
   Observable,
+  GraphQLResponse,
 } from "relay-runtime";
 import { env } from "./env";
 import { createClient } from "graphql-ws";
@@ -25,7 +26,7 @@ const fetchFn: FetchFunction = async (request, variables) => {
     }),
   });
 
-  return await resp.json();
+  return (await resp.json()) as GraphQLResponse;
 };
 
 const subscribeClient = createClient({

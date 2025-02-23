@@ -13,14 +13,14 @@ export const router = createBrowserRouter([
       {
         path: "/",
         element: <HomePage />,
-        loader: async () => {
+        loader: () => {
           return loadQuery(relayEnvironment, homePageQuery, {});
         },
       },
       {
         path: "/user/:userId",
         element: <UserPage />,
-        loader: async ({ params }) => {
+        loader: ({ params }) => {
           const id = params.userId;
           if (!id) {
             throw Error("Require userId to be defined!");

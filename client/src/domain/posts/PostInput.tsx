@@ -62,6 +62,8 @@ function _PostInput(props: PostInputProps) {
 
   return (
     <PostFrame user={user} displayDate={currentTime}>
+      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises
+          -- different behaviour! */}
       <form onSubmit={form.handleSubmit(handleSubmit)}>
         <Stack direction={"row"} spacing={1} justifyContent={"space-between"}>
           <FormInput

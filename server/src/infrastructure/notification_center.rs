@@ -106,21 +106,22 @@ impl NotificationCenterDaemon {
         })
         .forward(tx);
 
-        client
-            .batch_execute(
-                r"
-                LISTEN post_notification;
-                LISTEN comment_notification;
-            ",
-            )
-            .await
-            .map_err(|e| NotificationCenterError::DaemonFailedToStart(e.to_string()))?;
-
         spawn(stream);
 
         let daemon_tx = self.tx.clone();
 
         spawn(async move {
+            client
+                .batch_execute(
+                    r"
+                    LISTEN post_notification;
+                    LISTEN comment_notification;
+                    ",
+                )
+                .await
+                .map_err(|e| NotificationCenterError::DaemonFailedToStart(e.to_string()))
+                .unwrap();
+
             debug!("Started listener");
 
             while let Some(AsyncMessage::Notification(msg)) = rx.next().await {
