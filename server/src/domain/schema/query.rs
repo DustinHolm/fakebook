@@ -20,7 +20,7 @@ pub struct RootQuery;
 impl RootQuery {
     #[instrument(skip(self, ctx), err)]
     async fn node(&self, ctx: &Context<'_>, id: ID) -> Result<Node, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         if let Ok(inner_id) = AppUser::decode(&id) {
             let user = loaders
@@ -67,7 +67,7 @@ impl RootQuery {
 
     #[instrument(skip(self, ctx), err)]
     async fn user(&self, ctx: &Context<'_>, id: ID) -> Result<AppUser, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         let inner_id = AppUser::decode(&id).map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
 
@@ -83,7 +83,7 @@ impl RootQuery {
 
     #[instrument(skip(self, ctx), err)]
     async fn viewer(&self, ctx: &Context<'_>) -> Result<Viewer, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         let id = DbId::from(1); // Placeholder until we have auth
 

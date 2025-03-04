@@ -33,7 +33,7 @@ impl AppUser {
     #[graphql(complexity = "10 * child_complexity")]
     // TODO: Limit number of loaded friends?
     pub async fn friends(&self, ctx: &Context<'_>) -> Result<Vec<AppUser>, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         let friend_ids = loaders
             .friend_id
@@ -66,7 +66,7 @@ impl AppUser {
         first: Option<i32>,
         last: Option<i32>,
     ) -> Result<AppConnection<Post>, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         let posts = loaders
             .posts_of_author

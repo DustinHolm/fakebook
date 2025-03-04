@@ -153,6 +153,7 @@ type Viewer {
 	firstName: String!
 	lastName: String!
 	relevantPosts(after: String, before: String, first: Int, last: Int): PostConnection!
+	relevantAdUrl: String!
 }
 
 directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT

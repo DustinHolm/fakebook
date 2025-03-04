@@ -309,10 +309,12 @@ impl TryFrom<tokio_postgres::Notification> for Notification {
 
     fn try_from(value: tokio_postgres::Notification) -> Result<Self, Self::Error> {
         match value.channel() {
-            "post_notification" => PostNotification::try_from(value.payload())
-                .map(|notification| Notification::Post(notification)),
-            "comment_notification" => CommentNotification::try_from(value.payload())
-                .map(|notification| Notification::Comment(notification)),
+            "post_notification" => {
+                PostNotification::try_from(value.payload()).map(Notification::Post)
+            }
+            "comment_notification" => {
+                CommentNotification::try_from(value.payload()).map(Notification::Comment)
+            }
             _ => Err(NotificationCenterError::ParsingFailed),
         }
     }

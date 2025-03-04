@@ -2,7 +2,7 @@ mod domain;
 mod infrastructure;
 
 use axum::serve;
-use infrastructure::notification_center::NotificationCenter;
+use infrastructure::{notification_center::NotificationCenter, urls::Urls};
 use tokio::net::TcpListener;
 
 use crate::infrastructure::{app_state::AppState, db, logging, router, schema, shutdown};
@@ -12,6 +12,7 @@ async fn main() {
     schema::save_schema("./schema.graphql").expect("Should have written schema to file");
     let _ = dotenvy::dotenv(); // If .env is not found, ENV might be configured already
     let addr = dotenvy::var("HOSTING_ADDRESS").expect("Need to know where to bind app");
+    let urls = Urls::new().expect("Env should contain all necessary urls");
 
     let _guard = logging::init().expect("Logging should build"); // Guard flushes when main/server stops
 
@@ -26,7 +27,7 @@ async fn main() {
         .await
         .expect("NotificationCenter should have started");
 
-    let app_state = AppState::new(notification_center, repo);
+    let app_state = AppState::new(notification_center, repo, urls);
     let router = router::new(app_state);
 
     let listener = TcpListener::bind(&addr)

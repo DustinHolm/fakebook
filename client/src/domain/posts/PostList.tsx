@@ -13,6 +13,7 @@ const PostList_post = graphql`
     createdOn
     content
     author {
+      id
       firstName
       lastName
     }

@@ -1,4 +1,4 @@
-import { Suspense, memo, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { ConnectionHandler, graphql } from "relay-runtime";
 import { UserPageQuery } from "$schemas/UserPageQuery.graphql";
 import { usePreloadedRoute } from "$util/usePreloadRoute";
@@ -6,7 +6,7 @@ import { PostList } from "$domain/posts/PostList";
 import { usePaginationFragment, useSubscription } from "react-relay";
 import { UserPageRefetchQuery } from "$schemas/UserPageRefetchQuery.graphql";
 import { UserPage_user$key } from "$schemas/UserPage_user.graphql";
-import { Button } from "@mui/joy";
+import { Button, Divider, Stack } from "@mui/joy";
 
 export const userPageQuery = graphql`
   query UserPageQuery($id: ID!) {
@@ -74,19 +74,11 @@ function _UserPage() {
   );
 
   return (
-    <>
+    <Stack divider={<Divider />} spacing={4}>
       <PostList fragmentKey={posts} />
       <Button onClick={() => loadPrevious(5)}>More!</Button>
-    </>
+    </Stack>
   );
 }
 
-function _UserPageWithSuspense() {
-  return (
-    <Suspense fallback={"loading"}>
-      <_UserPage />
-    </Suspense>
-  );
-}
-
-export const UserPage = memo(_UserPageWithSuspense);
+export const UserPage = memo(_UserPage);

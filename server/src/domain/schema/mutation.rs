@@ -26,7 +26,7 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: AppUserInput,
     ) -> Result<AppUser, GqlError> {
-        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>()?;
 
         repo.save_user(&input.first_name, &input.last_name)
             .await
@@ -39,8 +39,8 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: AddFriendInput,
     ) -> Result<AppUser, GqlError> {
-        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>()?;
+        let loaders = ctx.data::<Loaders>()?;
 
         let user_id = DbId::from(1); // Placeholder until we have auth
         let friend_id =
@@ -75,7 +75,7 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: PostInput,
     ) -> Result<Edge<AppCursor, Post, EmptyFields>, GqlError> {
-        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>()?;
 
         let author = DbId::from(1); // Placeholder until we have auth
 
@@ -93,7 +93,7 @@ impl RootMutation {
         ctx: &Context<'_>,
         input: CommentInput,
     ) -> Result<Edge<AppCursor, Comment, EmptyFields>, GqlError> {
-        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>()?;
 
         let author_id = DbId::from(1); // Placeholder until we have auth
 

@@ -1,5 +1,8 @@
-use hyper::Request;
+use std::collections::HashMap;
+
+use hyper::{HeaderMap, Request};
 use opentelemetry::trace::TracerProvider;
+use opentelemetry_sdk::propagation::TraceContextPropagator;
 use tower_http::trace::MakeSpan;
 use tracing::{span, Level, Span};
 use tracing_appender::non_blocking::WorkerGuard;
@@ -51,4 +54,17 @@ impl<B> MakeSpan<B> for CustomMakeSpan {
             otel.kind = "server"
         )
     }
+}
+
+pub fn current_span_as_headers() -> HeaderMap {
+    use opentelemetry::propagation::TextMapPropagator;
+    use tracing_opentelemetry::OpenTelemetrySpanExt;
+
+    let propagator = TraceContextPropagator::new();
+    let mut header_map = HashMap::new();
+    let trace_context = Span::current().context();
+
+    propagator.inject_context(&trace_context, &mut header_map);
+
+    HeaderMap::try_from(&header_map).unwrap_or_default()
 }

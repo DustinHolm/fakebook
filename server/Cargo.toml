@@ -24,6 +24,7 @@ opentelemetry_sdk = { version = "0.27.1", features = [
 ], optional = true }
 postgres-types = { version = "0.2.9", features = ["derive"] }
 refinery = { version = "0.8.12", features = ["tokio-postgres"] }
+reqwest = { version = "0.12", features = ["json"] }
 serde = "1.0.217"
 thiserror = "2.0.11"
 time = "0.3.37"

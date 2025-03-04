@@ -26,7 +26,7 @@ impl Post {
     #[instrument(skip_all, err)]
     #[graphql(complexity = 3)]
     async fn author(&self, ctx: &Context<'_>) -> Result<AppUser, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         loaders
             .app_user
@@ -57,7 +57,7 @@ impl Post {
         first: Option<i32>,
         last: Option<i32>,
     ) -> Result<AppConnection<Comment>, GqlError> {
-        let loaders = ctx.data::<Loaders>().map_err(|_| GqlError::InternalData)?;
+        let loaders = ctx.data::<Loaders>()?;
 
         let comments = loaders
             .comments_of_post
@@ -66,9 +66,7 @@ impl Post {
             .map_err(|_| GqlError::DbLoad)?
             .ok_or_else(|| GqlError::InvalidState("Expected empty vec, got None".to_string()))?;
 
-        let connection = paginate(after, before, first, last, comments)
-            .await
-            .map_err(|_| GqlError::InternalData)?;
+        let connection = paginate(after, before, first, last, comments).await?;
 
         Ok(connection)
     }

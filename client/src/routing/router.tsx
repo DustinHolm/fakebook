@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter } from "react-router";
 import { BodyPage } from "$domain/body/BodyPage";
 import { HomePage, homePageQuery } from "$domain/home/HomePage";
 import { UserPage, userPageQuery } from "$domain/user/UserPage";

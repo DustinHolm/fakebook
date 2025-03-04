@@ -7,5 +7,6 @@ pub mod notification_center;
 pub mod router;
 pub mod schema;
 pub mod shutdown;
+pub mod urls;
 
 pub use errors::DbError;

@@ -3,7 +3,7 @@ import { memo } from "react";
 import { PostFrame } from "./PostFrame";
 
 type PostProps = {
-  user: { firstName: string; lastName: string };
+  user: { id: string; firstName: string; lastName: string };
   createdOn: Date;
   message: string;
 };

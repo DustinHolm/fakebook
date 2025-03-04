@@ -96,7 +96,7 @@ impl Repo {
         self.config
             .connect(NoTls)
             .await
-            .map_err(|e| InfrastructureError::DbExplicitConnection(e))
+            .map_err(InfrastructureError::DbExplicitConnection)
     }
 
     #[instrument(skip(self), err)]

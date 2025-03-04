@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/joy";
+import { Link, Stack } from "@mui/joy";
 import { memo } from "react";
 
 function _Header() {
@@ -9,9 +9,9 @@ function _Header() {
       direction={"row"}
       sx={{ minHeight: "64px", padding: 1, backgroundColor: "primary.solidBg" }}
     >
-      <Typography textColor={"common.white"} level="h1">
+      <Link textColor={"common.white"} level="h1" href={"/"}>
         Fakebook
-      </Typography>
+      </Link>
     </Stack>
   );
 }

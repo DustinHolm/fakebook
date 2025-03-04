@@ -19,9 +19,23 @@ pub enum GqlError {
     #[error("Could not save to db")]
     DbSave,
     #[error("Could not access internal tooling")]
-    InternalData,
+    InternalData(String),
     #[error("Invalid internal state: {0}")]
     InvalidState(String),
     #[error("Invalid request: {0}")]
     InvalidRequest(String),
+    #[error("Other server returned error: {0}")]
+    OtherServer(String),
+}
+
+impl From<reqwest::Error> for GqlError {
+    fn from(value: reqwest::Error) -> Self {
+        Self::OtherServer(value.to_string())
+    }
+}
+
+impl From<async_graphql::Error> for GqlError {
+    fn from(value: async_graphql::Error) -> Self {
+        Self::InternalData(value.message)
+    }
 }

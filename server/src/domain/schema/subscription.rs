@@ -35,7 +35,7 @@ impl RootSubscription {
         ctx: &'a Context<'a>,
         user_id: ID,
     ) -> Result<impl Stream<Item = Vec<Edge<AppCursor, Post, EmptyFields>>> + 'a, GqlError> {
-        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>()?;
 
         let user_id =
             AppUser::decode(&user_id).map_err(|e| GqlError::InvalidRequest(e.to_string()))?;
@@ -81,10 +81,8 @@ impl RootSubscription {
         &'a self,
         ctx: &'a Context<'a>,
     ) -> Result<impl Stream<Item = Vec<Edge<AppCursor, Post, EmptyFields>>> + 'a, GqlError> {
-        let repo = ctx.data::<Repo>().map_err(|_| GqlError::InternalData)?;
-        let notification_center = ctx
-            .data::<NotificationCenter>()
-            .map_err(|_| GqlError::InternalData)?;
+        let repo = ctx.data::<Repo>()?;
+        let notification_center = ctx.data::<NotificationCenter>()?;
 
         let user_id = DbId::from(1); // Placeholder until we have auth
 
@@ -118,15 +116,12 @@ impl RootSubscription {
         let mut author_ids = friend_ids;
         author_ids.push(user_id);
 
-        let topics = author_ids
-            .into_iter()
-            .map(|id| ListenerTopic::User(id))
-            .collect();
+        let topics = author_ids.into_iter().map(ListenerTopic::User).collect();
 
-        let mut handle = notification_center.subscribe(topics).await.map_err(|e| {
-            error!(message = e.to_string());
-            GqlError::InternalData
-        })?;
+        let mut handle = notification_center
+            .subscribe(topics)
+            .await
+            .map_err(|e| GqlError::InternalData(e.to_string()))?;
 
         let stream = stream!({
             while let Some(notifications) = handle.receive().await {
