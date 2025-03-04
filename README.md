@@ -4,10 +4,13 @@ Playground for trying out technologies.
 
 - ~~axum graphql server~~
 - ~~benchmarking~~
-- relay frontend
+- ~~relay frontend~~
 - cookie based auth
 - some alternative global state library (jotai/zustand/etc.)
-- swr
-- full nextjs site
-- kubernetes cluster
+- ~~swr~~ (no longer relevant)
+- ~~full nextjs site~~
+- ~~kubernetes cluster~~ (no longer relevant)
 - rust ssr
+- ~~otel propagation~~
+- protobuf/grpc
+- persisted queries
